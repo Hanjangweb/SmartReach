@@ -36,9 +36,10 @@ export default function TemplatesManager() {
     setLoading(true);
     try {
       const res = await api.get('/templates', { params: { category: selectedCategory } });
-      setTemplates(res.data.templates);
+      setTemplates(res.data.templates || []);
     } catch (err) {
       toast.error('Failed to fetch templates');
+      setTemplates([]);
     } finally {
       setLoading(false);
     }
@@ -187,7 +188,7 @@ export default function TemplatesManager() {
                 rows="6"
               />
               <p className="text-xs text-muted mt-2">
-                💡 Tip: Use {{name}}, {{phone}}, {{property}}, {{budget}}, {{location}} for dynamic fields
+                💡 Tip: Use {'{{name}}'}, {'{{phone}}'}, {'{{property}}'}, {'{{budget}}'}, {'{{location}}'} for dynamic fields
               </p>
             </div>
           </div>
