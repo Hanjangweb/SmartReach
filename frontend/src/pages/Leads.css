@@ -1,0 +1,92 @@
+/* Leads page */
+.leads-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  flex-wrap: wrap;
+}
+
+.filter-search {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  transition: border-color var(--transition-fast);
+}
+.filter-search:focus-within { border-color: var(--indigo-500); }
+.filter-icon { color: var(--text-muted); flex-shrink: 0; }
+.filter-input { background: none; border: none; outline: none; color: var(--text-primary); font-family: var(--font-body); font-size: 0.9rem; flex: 1; min-width: 0; }
+.filter-input::placeholder { color: var(--text-muted); }
+
+.filter-selects { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-select { width: auto; min-width: 130px; padding: 8px 36px 8px 12px; font-size: 0.85rem; }
+
+/* Lead Card */
+.lead-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  cursor: pointer;
+}
+
+.lead-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.lead-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lead-info-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.lead-info-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.lead-followup {
+  font-size: 0.75rem;
+  color: var(--amber-400);
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+}
+
+.lead-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+/* Pagination */
+.leads-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.min-width-0 { min-width: 0; }

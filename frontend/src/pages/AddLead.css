@@ -1,0 +1,18 @@
+/* Add Lead page */
+.add-lead-form { max-width: 900px; }
+
+.form-section { margin-bottom: 32px; }
+
+.form-section:last-of-type { margin-bottom: 24px; }
+
+.form-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-heading);
+}
+
+.mt-4 { margin-top: 16px; }

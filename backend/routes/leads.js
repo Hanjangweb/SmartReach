@@ -1,0 +1,178 @@
+const express = require('express');
+const Lead = require('../models/Lead');
+const Note = require('../models/Note');
+const Plan = require('../models/Plan');
+const { protect } = require('../middleware/auth');
+
+const router = express.Router();
+
+// @route GET /api/leads
+router.get('/', protect, async (req, res, next) => {
+  try {
+    const { status, source, leadScore, search, page = 1, limit = 20, agentId } = req.query;
+    const filter = { isArchived: false };
+    if (req.user.role !== 'admin') {
+      filter.agent = req.user._id;
+    } else if (agentId) {
+      filter.agent = agentId;
+    }
+
+    if (status) filter.status = status;
+    if (source) filter.source = source;
+    if (leadScore) filter.leadScore = leadScore;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
+        { requirement: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const [leads, total] = await Promise.all([
+      Lead.find(filter).populate('agent', 'name email').sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+      Lead.countDocuments(filter),
+    ]);
+
+    res.json({
+      success: true,
+      leads,
+      pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)) },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// @route POST /api/leads
+router.post('/', protect, async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') {
+      const plan = await Plan.findOne({ planId: req.user.plan });
+      if (plan && plan.leadLimit !== null) {
+        const leadCount = await Lead.countDocuments({ agent: req.user._id, isArchived: false });
+        if (leadCount >= plan.leadLimit) {
+          return res.status(403).json({
+            success: false,
+            message: `You have reached the lead limit for your ${plan.name} plan (${plan.leadLimit} leads). Please upgrade to add more.`,
+          });
+        }
+      }
+    }
+
+    const lead = await Lead.create({ ...req.body, agent: req.user._id });
+    res.status(201).json({ success: true, lead });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+// @route GET /api/leads/:id
+router.get('/:id', protect, async (req, res, next) => {
+  try {
+    const query = { _id: req.params.id };
+    if (req.user.role !== 'admin') query.agent = req.user._id;
+    const lead = await Lead.findOne(query).populate('notes').populate('agent', 'name email');
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    res.json({ success: true, lead });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// @route PUT /api/leads/:id
+router.put('/:id', protect, async (req, res, next) => {
+  try {
+    const query = { _id: req.params.id };
+    if (req.user.role !== 'admin') query.agent = req.user._id;
+    const lead = await Lead.findOneAndUpdate(
+      query,
+      { ...req.body, updatedAt: new Date() },
+      { new: true, runValidators: true }
+    );
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    res.json({ success: true, lead });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// @route DELETE /api/leads/:id
+router.delete('/:id', protect, async (req, res, next) => {
+  try {
+    const query = { _id: req.params.id };
+    if (req.user.role !== 'admin') query.agent = req.user._id;
+    const lead = await Lead.findOneAndUpdate(
+      query,
+      { isArchived: true },
+      { new: true }
+    );
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    res.json({ success: true, message: 'Lead archived' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// @route GET /api/leads/:id/notes
+router.get('/:id/notes', protect, async (req, res, next) => {
+  try {
+    const query = { _id: req.params.id };
+    if (req.user.role !== 'admin') query.agent = req.user._id;
+    const lead = await Lead.findOne(query);
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+
+    const notes = await Note.find({ lead: req.params.id }).sort({ createdAt: -1 });
+    res.json({ success: true, notes });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// @route POST /api/leads/:id/notes
+router.post('/:id/notes', protect, async (req, res, next) => {
+  try {
+    const query = { _id: req.params.id };
+    if (req.user.role !== 'admin') query.agent = req.user._id;
+    const lead = await Lead.findOne(query);
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+
+    const note = await Note.create({
+      lead: req.params.id,
+      agent: req.user._id,
+      content: req.body.content,
+      type: req.body.type || 'manual',
+    });
+
+    // Also update conversation history on lead
+    if (req.body.addToHistory) {
+      lead.conversationHistory.push({ role: 'agent', message: req.body.content });
+      await lead.save();
+    }
+
+    res.status(201).json({ success: true, note });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// @route PUT /api/leads/:id/status
+router.put('/:id/status', protect, async (req, res, next) => {
+  try {
+    const query = { _id: req.params.id };
+    if (req.user.role !== 'admin') query.agent = req.user._id;
+    const lead = await Lead.findOneAndUpdate(
+      query,
+      { status: req.body.status, lastContacted: new Date() },
+      { new: true }
+    );
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    res.json({ success: true, lead });
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;

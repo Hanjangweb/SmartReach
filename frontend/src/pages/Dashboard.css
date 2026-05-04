@@ -1,0 +1,120 @@
+/* Dashboard Styles */
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  cursor: default;
+}
+
+.stat-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-card-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-card-value {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+/* Score Cards */
+.score-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.score-card > svg { flex-shrink: 0; }
+
+.score-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.score-num {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.score-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.score-card.hot { border-color: rgba(244, 63, 94, 0.25); }
+.score-card.hot > svg { color: #fb7185; }
+.score-card.hot .score-num { color: #fb7185; }
+
+.score-card.warm { border-color: rgba(245, 158, 11, 0.25); }
+.score-card.warm > svg { color: var(--amber-400); }
+.score-card.warm .score-num { color: var(--amber-400); }
+
+.score-card.cold { border-color: rgba(56, 189, 248, 0.25); }
+.score-card.cold > svg { color: var(--sky-400); }
+.score-card.cold .score-num { color: var(--sky-400); }
+
+/* Chart Tooltip */
+.chart-tooltip {
+  background: rgba(13, 21, 38, 0.95);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow-card);
+}
+
+.chart-tooltip-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+/* Recent Leads */
+.recent-leads-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recent-lead-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.recent-lead-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.min-width-0 { min-width: 0; }

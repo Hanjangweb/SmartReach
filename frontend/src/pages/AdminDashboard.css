@@ -1,0 +1,118 @@
+/* Admin Dashboard */
+.admin-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-table td {
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.form-select-xs {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  height: auto;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.form-select-xs:focus {
+  border-color: var(--indigo);
+}
+
+.filter-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filter-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+}
+
+.filter-input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.filter-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--indigo);
+  outline: none;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+@media (max-width: 1024px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-table {
+    min-width: 900px;
+  }
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+

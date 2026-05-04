@@ -1,0 +1,80 @@
+/* Settings */
+.settings-grid {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.settings-avatar { display: flex; align-items: center; gap: 16px; }
+
+/* Plans */
+.plans-grid { display: flex; flex-direction: column; gap: 14px; }
+
+.plan-card {
+  padding: 20px;
+  position: relative;
+  transition: all var(--transition-base);
+}
+
+.plan-card.plan-active {
+  border-color: var(--plan-color, var(--indigo-500));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--plan-color, #6366f1) 20%, transparent);
+}
+
+.plan-card.plan-popular { border-color: rgba(99, 102, 241, 0.4); }
+
+.plan-popular-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gradient-brand);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.plan-header { margin-bottom: 14px; }
+
+.plan-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--plan-color, var(--text-primary));
+  margin-bottom: 4px;
+  font-family: var(--font-heading);
+}
+
+.plan-price {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+}
+
+.plan-leads { font-size: 0.8rem; color: var(--text-secondary); }
+
+.plan-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.plan-features li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.plan-features svg { color: var(--plan-color, var(--indigo-400)); flex-shrink: 0; }
+
+@media (max-width: 900px) {
+  .settings-grid { grid-template-columns: 1fr; }
+}

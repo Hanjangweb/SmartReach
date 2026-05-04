@@ -1,0 +1,48 @@
+/* AI Extract */
+.extract-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.extract-textarea {
+  min-height: 220px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.sample-btns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.extracted-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.extract-how { }
+
+.how-steps { display: flex; flex-direction: column; gap: 18px; }
+
+.how-step { display: flex; align-items: flex-start; gap: 14px; }
+
+.how-num {
+  width: 28px;
+  height: 28px;
+  background: var(--gradient-brand);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+
+.how-step p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
+
+@media (max-width: 900px) {
+  .extract-grid { grid-template-columns: 1fr; }
+  .extracted-fields { grid-template-columns: 1fr; }
+}
