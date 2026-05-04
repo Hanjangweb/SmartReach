@@ -67,20 +67,41 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
       <nav className="sidebar-nav">
         {NAV_ITEMS.map((item) => {
           const isPremium = item.premium && (!user?.plan || user.plan === 'free');
+          
+          if (isPremium) {
+            return (
+              <div
+                key={item.to}
+                className="sidebar-item disabled"
+                title={collapsed ? item.label : 'Upgrade to Pro to unlock'}
+              >
+                <span className="sidebar-icon"><item.icon size={20} /></span>
+                <AnimatePresence>
+                  {!collapsed && (
+                    <motion.div
+                      className="sidebar-label-wrapper"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -8 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <span className="sidebar-label">{item.label}</span>
+                      {item.premium && <span className="premium-badge">✨</span>}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          }
+
           return (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
-              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isPremium ? 'disabled' : ''}`}
+              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
               title={collapsed ? item.label : undefined}
-              onClick={(e) => {
-                if (isPremium) {
-                  e.preventDefault();
-                  return;
-                }
-                onCloseMobile?.();
-              }}
+              onClick={onCloseMobile}
             >
               <span className="sidebar-icon"><item.icon size={20} /></span>
               <AnimatePresence>

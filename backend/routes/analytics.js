@@ -142,7 +142,6 @@ router.get('/response-time', protect, async (req, res, next) => {
         $group: {
           _id: null,
           avgResponseTime: { $avg: '$responseTime' },
-          medianResponseTime: { $median: { input: '$responseTime' } },
           minResponseTime: { $min: '$responseTime' },
           maxResponseTime: { $max: '$responseTime' },
           totalLeadsWithResponse: { $sum: 1 },
@@ -162,7 +161,6 @@ router.get('/response-time', protect, async (req, res, next) => {
         $project: {
           _id: 0,
           avgResponseTime: { $round: ['$avgResponseTime', 1] },
-          medianResponseTime: { $round: ['$medianResponseTime', 1] },
           minResponseTime: { $round: ['$minResponseTime', 1] },
           maxResponseTime: { $round: ['$maxResponseTime', 1] },
           totalLeadsWithResponse: 1,

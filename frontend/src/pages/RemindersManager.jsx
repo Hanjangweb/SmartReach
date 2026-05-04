@@ -4,7 +4,7 @@ import { Clock, Plus, Trash2, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import api from '../lib/api';
-import './Reminders.css';
+import './RemindersManager.css';
 
 export default function RemindersManager() {
   const { user } = useAuthStore();
