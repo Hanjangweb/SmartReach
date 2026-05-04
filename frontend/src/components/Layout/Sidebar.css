@@ -121,6 +121,24 @@
   color: var(--indigo-400);
 }
 
+.sidebar-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.sidebar-label-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.premium-badge {
+  margin-left: auto;
+  font-size: 0.8rem;
+}
+
 .admin-item {
   margin-top: 12px;
   border-top: 1px solid var(--border);

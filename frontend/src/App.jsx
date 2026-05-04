@@ -8,6 +8,9 @@ import Leads from './pages/Leads';
 import AddLead from './pages/AddLead';
 import LeadDetail from './pages/LeadDetail';
 import Reminders from './pages/Reminders';
+import RemindersManager from './pages/RemindersManager';
+import Analytics from './pages/Analytics';
+import Templates from './pages/Templates';
 import AIExtract from './pages/AIExtract';
 import Settings from './pages/Settings';
 import AdminDashboard from './pages/AdminDashboard';
@@ -47,6 +50,9 @@ export default function App() {
           <Route path="leads/edit/:id" element={<AddLead />} />
           <Route path="leads/:id" element={<LeadDetail />} />
           <Route path="reminders" element={<Reminders />} />
+          <Route path="reminders-manager" element={<RemindersManager />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="templates" element={<Templates />} />
           <Route path="ai/extract" element={<AIExtract />} />
           <Route path="settings" element={<Settings />} />
           <Route path="pricing" element={<Pricing />} />

@@ -5,7 +5,7 @@ const planSchema = new mongoose.Schema(
     planId: {
       type: String,
       required: true,
-      unique: true, // 'free', 'pro', 'advanced'
+      unique: true, // 'free', 'pro', 'premium', 'enterprise'
     },
     name: {
       type: String,
@@ -36,6 +36,19 @@ const planSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // New fields for advanced features
+    includeAnalytics: { type: Boolean, default: false },
+    includeLeadScoring: { type: Boolean, default: false },
+    includeAutomatedReminders: { type: Boolean, default: false },
+    includePremiumTemplates: { type: Boolean, default: false },
+    includeTeamCollaboration: { type: Boolean, default: false },
+    maxTeamMembers: { type: Number, default: 0 },
+    includePropertyCatalog: { type: Boolean, default: false },
+    includeMarketingAutomation: { type: Boolean, default: false },
+    maxEmailsCampaigns: { type: Number, default: 0 }, // per month
+    includeWhatsAppAPI: { type: Boolean, default: false },
+    maxRemindersMonth: { type: Number, default: 0 }, // 0 = unlimited
+    APIAccess: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

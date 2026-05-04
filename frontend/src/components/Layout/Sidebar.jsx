@@ -2,7 +2,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, PlusCircle, Bell, Bot, Settings,
-  ChevronLeft, ChevronRight, Zap, LogOut, ShieldAlert, CreditCard
+  ChevronLeft, ChevronRight, Zap, LogOut, ShieldAlert, CreditCard,
+  TrendingUp, MessageSquare, Target
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import './Sidebar.css';
@@ -10,7 +11,9 @@ import './Sidebar.css';
 const NAV_ITEMS = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/leads', icon: Users, label: 'Leads' },
-  { to: '/reminders', icon: Bell, label: 'Reminders' },
+  { to: '/reminders-manager', icon: Target, label: 'Smart Reminders', premium: true },
+  { to: '/analytics', icon: TrendingUp, label: 'Analytics', premium: true },
+  { to: '/templates', icon: MessageSquare, label: 'Templates', premium: true },
   { to: '/ai/extract', icon: Bot, label: 'AI Extract' },
   { to: '/settings', icon: Settings, label: 'Settings' },
   { to: '/pricing', icon: CreditCard, label: 'Pricing' },
@@ -62,31 +65,41 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
 
       {/* Navigation */}
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
-            title={collapsed ? item.label : undefined}
-            onClick={onCloseMobile}
-          >
-            <span className="sidebar-icon"><item.icon size={20} /></span>
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span
-                  className="sidebar-label"
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -8 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {item.label}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </NavLink>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const isPremium = item.premium && (!user?.plan || user.plan === 'free');
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${isPremium ? 'disabled' : ''}`}
+              title={collapsed ? item.label : undefined}
+              onClick={(e) => {
+                if (isPremium) {
+                  e.preventDefault();
+                  return;
+                }
+                onCloseMobile?.();
+              }}
+            >
+              <span className="sidebar-icon"><item.icon size={20} /></span>
+              <AnimatePresence>
+                {!collapsed && (
+                  <motion.div
+                    className="sidebar-label-wrapper"
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -8 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <span className="sidebar-label">{item.label}</span>
+                    {item.premium && <span className="premium-badge">✨</span>}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </NavLink>
+          );
+        })}
 
         {user?.role === 'admin' && (
           <NavLink
