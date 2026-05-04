@@ -14,6 +14,9 @@ import Templates from './pages/Templates';
 import AIExtract from './pages/AIExtract';
 import Settings from './pages/Settings';
 import AdminDashboard from './pages/AdminDashboard';
+import AgencyTeam from './pages/AgencyTeam';
+import PublicProperty from './pages/PublicProperty';
+import Automations from './pages/Automations';
 import Pricing from './pages/Pricing';
 import Properties from './pages/Properties';
 import Deals from './pages/Deals';
@@ -41,6 +44,7 @@ export default function App() {
       <NotificationManager />
       <Routes>
         {/* Public */}
+        <Route path="/p/:id" element={<PublicProperty />} />
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
@@ -58,7 +62,9 @@ export default function App() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="templates" element={<Templates />} />
           <Route path="ai/extract" element={<AIExtract />} />
+          <Route path="automations" element={<Automations />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="agency-team" element={<AgencyTeam />} />
           <Route path="pricing" element={<Pricing />} />
           <Route path="admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, TrendingUp, CheckCircle, Clock, Flame, Thermometer, Snowflake, Plus, ArrowRight } from 'lucide-react';
+import { Users, TrendingUp, CheckCircle, Clock, Flame, Thermometer, Snowflake, Plus, ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import api from '../lib/api';
@@ -43,18 +43,65 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
+const SALES_TIPS = [
+  "Call your leads within 5 minutes. The odds of qualifying a lead drop 80% after just 5 minutes.",
+  "Follow up at least 6 times. 80% of sales require 5 follow-up calls after the meeting.",
+  "Use text messages to confirm appointments. It reduces no-shows by 40%.",
+  "Don't just sell the property; sell the neighborhood, the schools, and the lifestyle.",
+  "Always ask open-ended questions. 'What are you looking for?' is better than 'Do you want a 3BHK?'",
+  "Your best leads are your past clients. Ask for referrals 30 days after closing.",
+  "Send a quick video introduction before the site visit. It builds massive trust.",
+  "Focus on the 'Why'. If you know why they are moving, you know how to close them.",
+  "Keep your CRM updated daily. A messy database means lost commission.",
+  "Listen 70% of the time, speak 30%. The client should be doing the talking.",
+  "Don't assume their budget is fixed. Buyers often stretch their budget by 10-15% for the perfect home.",
+  "Mondays and Tuesdays are historically the worst days to cold call. Try Thursday afternoons.",
+  "Send a hand-written 'Thank You' note after a site visit. It instantly separates you from 99% of agents.",
+  "When a client says 'Let me think about it', ask: 'What specifically do you need to think about?'",
+  "Provide a comparative market analysis (CMA) even if they don't ask. It shows authority.",
+  "Respond to WhatsApp messages instantly. Speed builds trust.",
+  "Always have 3 alternative properties ready to show if the first one fails.",
+  "Create a sense of urgency, but don't be pushy. Point out market trends and rising prices.",
+  "Use the 'Feel, Felt, Found' method for handling objections.",
+  "Dress 10% better than your client. It commands subconscious respect.",
+  "Never bash the competition. Focus entirely on the unique value you provide.",
+  "Follow up on weekends. Many buyers only have time to think about real estate on Sundays.",
+  "Keep your phone charged and always carry a power bank. A dead phone is a lost deal.",
+  "A 'No' today is often a 'Yes' in 6 months. Put them on a long-term drip campaign.",
+  "Record your sales calls and listen back to them. It's the fastest way to improve.",
+  "Before quoting a price, always build up the value of the property first.",
+  "Treat every lead like a $1M buyer. The best investors often dress the most casually.",
+  "Ask for the close. 'Would you like to move forward with the paperwork today?'",
+  "If they go silent, send a breakup text: 'Have you given up on finding a property in Noida?'",
+  "Stay positive. Real estate is a numbers game; every rejection brings you closer to a close.",
+  "Your network is your net worth. Spend 1 hour a week networking with other brokers."
+];
+
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [insight, setInsight] = useState(null);
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
     api.get('/dashboard/stats')
-      .then((res) => setStats(res.data.stats))
+      .then((res) => {
+        setStats(res.data.stats);
+        if (res.data.stats && user?.plan !== 'free') {
+          api.post('/dashboard/insight', {
+            totalLeads: res.data.stats.totalLeads,
+            newLeads: res.data.stats.newLeads,
+            closedDeals: res.data.stats.closedLeads,
+            conversionRate: res.data.stats.conversionRate
+          }).then(insightRes => setInsight(insightRes.data.insight)).catch(() => {});
+        } else if (user?.plan === 'free') {
+          setInsight("Upgrade to Pro/Advanced to unlock AI Pipeline Insights!");
+        }
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   if (loading) return (
     <div>
@@ -70,6 +117,7 @@ export default function Dashboard() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const todaysTip = SALES_TIPS[(new Date().getDate() - 1) % SALES_TIPS.length];
 
   return (
     <div>
@@ -79,6 +127,40 @@ export default function Dashboard() {
           <h1>{greeting}, {user?.name?.split(' ')[0]} 👋</h1>
           <p className="text-secondary text-sm mt-2">Here's your lead pipeline overview</p>
         </div>
+      </div>
+
+      <div className="grid grid-2 mb-6">
+        {/* Daily Sales Tip Widget */}
+        <motion.div className="glass-card p-4 border border-blue-500/20" style={{ background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.05), transparent)' }} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0 mt-1">
+              <span className="text-lg">💡</span>
+            </div>
+            <div>
+              <h4 className="text-blue-400 font-bold mb-1">Daily Agent Tip</h4>
+              <p className="text-sm text-secondary leading-relaxed font-medium italic">"{todaysTip}"</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* AI Insight Widget */}
+        <motion.div className="glass-card p-4 border border-emerald/20" style={{ background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.01))' }} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded bg-emerald/20 flex items-center justify-center text-emerald flex-shrink-0 mt-1">
+              <Sparkles size={16} />
+            </div>
+            <div>
+              <h4 className="text-emerald font-bold mb-1">AI Pipeline Insight</h4>
+              {insight ? (
+                <p className="text-sm text-secondary leading-relaxed">{insight}</p>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-secondary">
+                  <span className="spinner w-4 h-4" /> Analyzing your pipeline...
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Stats Grid */}

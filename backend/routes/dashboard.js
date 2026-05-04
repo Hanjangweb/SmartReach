@@ -1,6 +1,7 @@
 const express = require('express');
 const Lead = require('../models/Lead');
 const { protect } = require('../middleware/auth');
+const axios = require('axios');
 
 const router = express.Router();
 
@@ -89,6 +90,31 @@ router.get('/stats', protect, async (req, res, next) => {
     });
   } catch (err) {
     next(err);
+  }
+});
+
+// @route POST /api/dashboard/insight
+// @desc Get AI Strategic Summary for Dashboard
+router.post('/insight', protect, async (req, res, next) => {
+  try {
+    const { totalLeads, newLeads, closedDeals, conversionRate } = req.body;
+    
+    // In free plan, return placeholder
+    if (req.user.plan === 'free') {
+      return res.json({ success: true, insight: "Upgrade to Pro/Advanced to unlock AI Pipeline Insights!" });
+    }
+
+    const aiRes = await axios.post(`${process.env.AI_SERVICE_URL}/ai/insight/dashboard`, {
+      totalLeads: totalLeads || 0,
+      newLeads: newLeads || 0,
+      closedDeals: closedDeals || 0,
+      conversionRate: conversionRate || 0
+    });
+
+    res.json({ success: true, insight: aiRes.data.insight });
+  } catch (err) {
+    console.error('AI Dashboard Insight error:', err.response?.data || err.message);
+    res.json({ success: true, insight: "AI Insight currently unavailable. Keep pushing those leads!" });
   }
 });
 

@@ -152,3 +152,44 @@
 @media (max-width: 900px) {
   .lead-detail-grid { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 768px) {
+  .lead-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* Make tabs scroll horizontally on mobile */
+  .detail-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    gap: 0;
+  }
+
+  .detail-tab {
+    padding: 11px 14px;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+  }
+
+  .detail-tab-content {
+    padding: 14px;
+  }
+
+  /* AI prompt row stacks on mobile */
+  .ai-prompt-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Make status buttons wrap nicely */
+  .status-btns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* AI reply card tweaks */
+  .ai-reply-card { padding: 14px; }
+  .ai-reply-text { font-size: 0.9rem; padding: 10px; }
+}

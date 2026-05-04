@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Phone, MapPin, Edit3, MessageSquare, Bot, Copy,
-  Bell, Star, Calendar, Send, ExternalLink, Zap, Home, Search
+  Bell, Star, Calendar, Send, ExternalLink, Zap, Home, Search, Mic, Link, Cloud, FileText, Download, Trash2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
@@ -39,6 +39,9 @@ export default function LeadDetail() {
   // Reminder state
   const [reminder, setReminder] = useState({ message: '', scheduledAt: '', type: 'call' });
   const [savingReminder, setSavingReminder] = useState(false);
+
+  // Documents state
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   useEffect(() => {
     fetchLead(id);
@@ -217,6 +220,57 @@ export default function LeadDetail() {
     setSavingReminder(false);
   };
 
+  const handleVoiceCall = async () => {
+    if (user?.plan !== 'advanced' && user?.role !== 'admin') {
+      toast.error('AI Voice Calling requires the Advanced plan!', { icon: '✨' });
+      return;
+    }
+    const t = toast.loading('Initiating AI Voice Call...');
+    try {
+      await api.post(`/voice/call/${id}`);
+      toast.success('AI Call initiated! Transcript will appear in notes shortly.', { id: t });
+    } catch (err) {
+      toast.error('Failed to initiate AI call', { id: t });
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (user?.plan === 'free') {
+      toast.error('Cloud Document Storage is a Pro feature!', { icon: '☁️' });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    setUploadingDoc(true);
+    const t = toast.loading('Uploading document to cloud...');
+    try {
+      await api.post(`/drive/upload/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      await fetchLead(id);
+      toast.success('Document uploaded securely.', { id: t });
+    } catch (err) {
+      toast.error('Upload failed.', { id: t });
+    }
+    setUploadingDoc(false);
+  };
+
+  const handleDeleteDocument = async (docId) => {
+    if (!confirm('Delete this document?')) return;
+    try {
+      await api.delete(`/drive/document/${id}/${docId}`);
+      await fetchLead(id);
+      toast.success('Document removed');
+    } catch {
+      toast.error('Failed to delete document');
+    }
+  };
+
   if (isLoading || !lead) return (
     <div>
       <div className="skeleton" style={{ height: 36, width: 200, marginBottom: 24 }} />
@@ -227,6 +281,7 @@ export default function LeadDetail() {
 
   const waPhone = `91${lead.phone?.replace(/\D/g, '')}`;
   const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(`Hi ${lead.name}, `)}`;
+  const bookingUrl = `${window.location.origin}/book/${id}`;
 
   return (
     <div>
@@ -249,6 +304,9 @@ export default function LeadDetail() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             WhatsApp
           </a>
+          <button className="btn btn-primary" onClick={handleVoiceCall} title="AI Voice Call (Pre-qualify Lead)">
+            <Mic size={16} /> AI Call
+          </button>
         </div>
       </div>
 
@@ -324,6 +382,43 @@ export default function LeadDetail() {
               {scoreLoading ? <span className="spinner" /> : <><Zap size={14} /> Score with AI</>}
             </button>
           </motion.div>
+
+          {/* Site Visit Card */}
+          <motion.div className="glass-card p-6 border border-emerald/20" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05), transparent)' }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar size={18} className="text-emerald" />
+              <h3 className="text-emerald m-0">Site Visit Tracking</h3>
+            </div>
+            
+            <div className="flex flex-col gap-4">
+              <div className="bg-black/20 p-3 rounded-lg flex justify-between items-center">
+                <div>
+                  <div className="text-xs text-muted mb-1">Current Status</div>
+                  <div className="font-semibold">{lead.siteVisitStatus !== 'None' ? lead.siteVisitStatus : 'Not Scheduled'}</div>
+                </div>
+                {lead.siteVisitDate && (
+                  <div className="text-right">
+                    <div className="text-xs text-muted mb-1">Scheduled For</div>
+                    <div className="font-semibold text-primary">{new Date(lead.siteVisitDate).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-xs text-muted mb-2 block">Client Booking Link</label>
+                <div className="flex gap-2">
+                  <input className="form-input flex-1 text-xs bg-white/5 font-mono" readOnly value={bookingUrl} />
+                  <button className="btn btn-secondary btn-icon" onClick={() => copyToClipboard(bookingUrl)} title="Copy Booking Link">
+                    <Copy size={14} />
+                  </button>
+                  <a href={`https://wa.me/${waPhone}?text=${encodeURIComponent(`Hi ${lead.name}, you can pick a time for your site visit using this link: ${bookingUrl}`)}`} target="_blank" rel="noreferrer" className="btn btn-success btn-icon" title="Send Link via WA">
+                    <Send size={14} />
+                  </a>
+                </div>
+                <p className="text-[11px] text-muted mt-2 leading-tight">Send this link to the lead. When they select a time, it will automatically update their status and schedule the visit.</p>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
         {/* Right: Tabs */}
@@ -346,6 +441,9 @@ export default function LeadDetail() {
             </button>
             <button className={`detail-tab ${tab === 'reminder' ? 'active' : ''}`} onClick={() => setTab('reminder')} id="tab-reminder">
               <Bell size={16} /> Reminder
+            </button>
+            <button className={`detail-tab ${tab === 'documents' ? 'active' : ''}`} onClick={() => setTab('documents')} id="tab-documents">
+              <Cloud size={16} /> Documents
             </button>
           </div>
 
@@ -549,6 +647,58 @@ export default function LeadDetail() {
                 <button className="btn btn-primary" onClick={saveReminder} disabled={savingReminder} id="save-reminder-btn">
                   {savingReminder ? <span className="spinner" /> : <><Bell size={16} /> Set Reminder</>}
                 </button>
+              </div>
+            )}
+
+            {/* Documents Tab */}
+            {tab === 'documents' && (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-blue-400 font-semibold flex items-center gap-2"><Cloud size={16}/> Cloud Storage</h4>
+                  <div>
+                    <input 
+                      type="file" 
+                      id="doc-upload" 
+                      className="hidden" 
+                      onChange={handleFileUpload} 
+                      disabled={uploadingDoc}
+                    />
+                    <label htmlFor="doc-upload" className={`btn btn-primary btn-sm ${uploadingDoc ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                      {uploadingDoc ? <span className="spinner" /> : <><FileText size={14} /> Upload File</>}
+                    </label>
+                  </div>
+                </div>
+
+                {!lead.documents || lead.documents.length === 0 ? (
+                  <div className="empty-state p-6">
+                    <span className="empty-state-icon">☁️</span>
+                    <p>No documents uploaded yet. Securely store contracts, IDs, and property docs here.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {lead.documents.map((doc) => (
+                      <div key={doc._id} className="glass-card p-3 flex justify-between items-center bg-white/5 border border-white/5">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0">
+                            <FileText size={14} />
+                          </div>
+                          <div className="truncate">
+                            <div className="font-semibold text-sm truncate">{doc.name}</div>
+                            <div className="text-xs text-muted">{new Date(doc.uploadedAt).toLocaleDateString()}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          <a href={doc.url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-icon btn-sm text-blue-400" title="Download">
+                            <Download size={14} />
+                          </a>
+                          <button className="btn btn-secondary btn-icon btn-sm text-red-400" onClick={() => handleDeleteDocument(doc._id)} title="Delete">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -90,3 +90,20 @@
 }
 
 .min-width-0 { min-width: 0; }
+
+/* Leads Mobile */
+@media (max-width: 768px) {
+  .leads-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px;
+  }
+  .filter-search { min-width: 0; }
+  .filter-selects { flex-wrap: wrap; }
+  .filter-select { flex: 1; min-width: 120px; }
+  .lead-card { padding: 14px; gap: 10px; }
+  .lead-card-actions { flex-wrap: wrap; }
+  .lead-card-actions .btn { flex: 1; justify-content: center; font-size: 0.78rem; }
+  .leads-pagination { gap: 10px; }
+}

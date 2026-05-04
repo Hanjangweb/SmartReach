@@ -39,6 +39,14 @@ const leadSchema = new mongoose.Schema(
     followUpDate: { type: Date, default: null },
     lastContacted: { type: Date, default: null },
 
+    // Site Visit
+    siteVisitDate: { type: Date, default: null },
+    siteVisitStatus: { 
+      type: String, 
+      enum: ['Scheduled', 'Completed', 'Cancelled', 'None'], 
+      default: 'None' 
+    },
+
     // AI Memory
     conversationHistory: [
       {
@@ -50,6 +58,13 @@ const leadSchema = new mongoose.Schema(
 
     tags: [{ type: String }],
     isArchived: { type: Boolean, default: false },
+
+    // Documents
+    documents: [{
+      name: String,
+      url: String, // Local path or Drive URL
+      uploadedAt: { type: Date, default: Date.now }
+    }],
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

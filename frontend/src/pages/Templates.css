@@ -195,3 +195,12 @@
   margin: 0 auto;
   text-align: center;
 }
+
+@media (max-width: 768px) {
+  .templates-grid {
+    grid-template-columns: 1fr;
+  }
+  .template-card { padding: 1rem; }
+  .category-tabs { gap: 0.3rem; }
+  .category-tab { padding: 0.6rem 0.75rem; font-size: 0.85rem; }
+}

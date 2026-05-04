@@ -6,6 +6,7 @@ import {
   TrendingUp, MessageSquare, Target, Home, DollarSign
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import { toast } from 'react-hot-toast';
 import './Sidebar.css';
 
 const NAV_ITEMS = [
@@ -16,7 +17,9 @@ const NAV_ITEMS = [
   { to: '/deals', icon: DollarSign, label: 'Deals & Commission', premium: true },
   { to: '/analytics', icon: TrendingUp, label: 'Analytics', premium: true },
   { to: '/templates', icon: MessageSquare, label: 'Templates', premium: true },
+  { to: '/automations', icon: Zap, label: 'Automations', premium: true },
   { to: '/ai/extract', icon: Bot, label: 'AI Extract' },
+  { to: '/agency-team', icon: Users, label: 'Agency Team', managerOnly: true },
   { to: '/settings', icon: Settings, label: 'Settings' },
   { to: '/pricing', icon: CreditCard, label: 'Pricing' },
 ];
@@ -67,15 +70,21 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
 
       {/* Navigation */}
       <nav className="sidebar-nav">
-        {NAV_ITEMS.filter(item => !(user?.role === 'admin' && item.to === '/pricing')).map((item) => {
+        {NAV_ITEMS.filter(item => {
+          if (item.to === '/pricing' && user?.role === 'admin') return false;
+          if (item.managerOnly && user?.role !== 'manager' && user?.role !== 'admin') return false;
+          return true;
+        }).map((item) => {
           const isPremium = item.premium && (!user?.plan || user.plan === 'free');
           
           if (isPremium) {
             return (
               <div
                 key={item.to}
-                className="sidebar-item disabled"
+                className="sidebar-item premium-locked"
+                onClick={() => toast.error(`The "${item.label}" feature is only available on Pro/Advanced plans.`, { icon: '✨' })}
                 title={collapsed ? item.label : 'Upgrade to Pro to unlock'}
+                style={{ cursor: 'pointer' }}
               >
                 <span className="sidebar-icon"><item.icon size={20} /></span>
                 <AnimatePresence>

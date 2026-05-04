@@ -17,6 +17,7 @@ from routes.score import router as score_router
 from routes.generate_template import router as generate_template_router
 from routes.insight import router as insight_router
 from routes.match import router as match_router
+from routes.chat import router as chat_router
 
 app = FastAPI(
     title="SmartReach AI Service",
@@ -40,6 +41,7 @@ app.include_router(score_router, prefix="/ai", tags=["Lead Scoring"])
 app.include_router(generate_template_router, prefix="/ai", tags=["AI Template Generation"])
 app.include_router(insight_router, prefix="/ai", tags=["AI Insight"])
 app.include_router(match_router, prefix="/ai", tags=["AI Property Matcher"])
+app.include_router(chat_router, prefix="/ai", tags=["AI Chatbot"])
 
 @app.get("/health")
 def health():

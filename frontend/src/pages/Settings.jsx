@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Building2, Phone, Save, Crown, Zap, Key, Copy } from 'lucide-react';
+import { User, Building2, Phone, Save, Crown, Zap, Key, Copy, Cloud } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { PayPalButtons } from '@paypal/react-paypal-js';
 import useAuthStore from '../store/authStore';
@@ -36,6 +36,19 @@ export default function Settings() {
       verifyPayment(sessionId, planId);
     }
     
+    const driveSuccess = searchParams.get('drive_success');
+    const driveError = searchParams.get('drive_error');
+    if (driveSuccess && !verifyRef.current) {
+      verifyRef.current = true;
+      toast.success('Google Drive Connected Successfully!', { icon: '☁️' });
+      fetchUser();
+      navigate('/settings', { replace: true });
+    } else if (driveError && !verifyRef.current) {
+      verifyRef.current = true;
+      toast.error(`Google Drive Connection Failed: ${driveError}`);
+      navigate('/settings', { replace: true });
+    }
+
     api.get('/plans').then(res => setPlans(res.data.plans)).catch(console.error);
   }, [searchParams]);
 
@@ -204,6 +217,47 @@ export default function Settings() {
           </motion.div>
         )}
 
+        {/* Cloud Storage Integration (Pro/Advanced) */}
+        {(user?.plan === 'pro' || user?.plan === 'advanced' || user?.role === 'admin') && (
+          <motion.div className="glass-card-elevated p-6 mt-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="flex items-center gap-3 mb-4">
+              <Cloud size={20} className="text-blue-400" />
+              <h3 className="text-blue-400">Cloud Storage Sync</h3>
+            </div>
+            <p className="text-sm text-secondary mb-4">
+              Connect your Google Drive to securely back up all lead transaction documents, photos, and contracts. 
+              {user?.googleDriveRefreshToken ? '' : ' (Requires Google API setup in your environment)'}
+            </p>
+            <div className="flex gap-4 items-center p-4 bg-white/5 rounded-lg border border-white/5">
+              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Cloud size={20} className="text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-sm">Google Drive Workspace</div>
+                <div className="text-xs text-muted">
+                  {user?.googleDriveRefreshToken ? `Connected as ${user.googleDriveEmail || 'Unknown Email'}` : 'Not Connected'}
+                </div>
+              </div>
+              {user?.googleDriveRefreshToken ? (
+                <button className="btn btn-secondary" onClick={() => toast.success('To disconnect, revoke access from your Google Account settings.', { icon: 'ℹ️' })}>
+                  Connected ✓
+                </button>
+              ) : (
+                <button className="btn btn-primary" onClick={async () => {
+                  try {
+                    const res = await api.get('/drive/auth-url');
+                    window.location.href = res.data.url;
+                  } catch (err) {
+                    toast.error('Failed to generate Google Drive connect link');
+                  }
+                }}>
+                  Connect Drive
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* Developer API (Advanced Plan or Admin Only) */}
         {(user?.plan === 'advanced' || user?.role === 'admin') && (
           <motion.div className="glass-card-elevated p-6 mt-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -239,6 +293,44 @@ export default function Settings() {
                 Keep this key secret. If you regenerate it, your old key will immediately stop working.
               </p>
             )}
+            {/* Facebook Webhook Section */}
+            <div className="mt-8 border-t border-white/10 pt-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="text-blue-500 font-bold text-xl flex items-center justify-center w-6 h-6 rounded bg-blue-500/20">f</div>
+                <h4 className="text-blue-400">Facebook Lead Ads Integration</h4>
+              </div>
+              <p className="text-sm text-secondary mb-4">
+                Use these details in your Meta Developer App to set up the Webhook for Facebook Lead Ads. Leads will automatically sync to your SmartReach account.
+              </p>
+              
+              <div className="flex flex-col gap-3">
+                <div className="form-group">
+                  <label className="text-xs text-muted">Webhook URL (Callback URL)</label>
+                  <div className="flex gap-2">
+                    <input className="form-input flex-1 text-sm bg-white/5" readOnly value={`${window.location.origin.replace('5173', '5000')}/api/webhooks/facebook`} />
+                    <button className="btn btn-secondary btn-icon" onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin.replace('5173', '5000')}/api/webhooks/facebook`);
+                      toast.success('Webhook URL copied!');
+                    }}>
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="text-xs text-muted">Verify Token</label>
+                  <div className="flex gap-2">
+                    <input className="form-input flex-1 text-sm bg-white/5 font-mono" readOnly value="smartreach_fb_secret" />
+                    <button className="btn btn-secondary btn-icon" onClick={() => {
+                      navigator.clipboard.writeText('smartreach_fb_secret');
+                      toast.success('Verify Token copied!');
+                    }}>
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </div>

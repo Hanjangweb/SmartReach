@@ -1,8 +1,50 @@
 const express = require('express');
 const Property = require('../models/Property');
+const Lead = require('../models/Lead');
+const Reminder = require('../models/Reminder');
+const Note = require('../models/Note');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Helper Function: The "New Listing" Auto-Matcher
+const matchPropertyToLeads = async (property) => {
+  try {
+    // Match leads where budget >= price, matching location and property type
+    const matchingLeads = await Lead.find({
+      status: { $in: ['New', 'Contacted'] },
+      budget: { $gte: property.price },
+      location: { $regex: new RegExp(property.location, 'i') },
+      propertyType: property.type,
+      isArchived: false
+    });
+
+    console.log(`[Auto-Matcher] Found ${matchingLeads.length} leads matching property ${property._id}`);
+
+    for (const lead of matchingLeads) {
+      const waUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/p/${property._id}`;
+      const message = `Hi ${lead.name.split(' ')[0]}, we just listed a new ${property.type} in ${property.location} for ₹${property.price}L that matches your exact requirements! Check it out here: ${waUrl}`;
+      
+      await Reminder.create({
+        userId: lead.agent,
+        leadId: lead._id,
+        message: `[Auto-Match] Suggested WA for new listing "${property.title}": "${message}"`,
+        type: 'whatsapp',
+        scheduledAt: new Date(Date.now() + 5 * 60 * 1000), // Alert agent in 5 mins
+        status: 'pending'
+      });
+
+      await Note.create({
+        lead: lead._id,
+        agent: lead.agent,
+        content: `[System Automation] Auto-matched with new property: ${property.title}. Reminder created.`,
+        type: 'system'
+      });
+    }
+  } catch (err) {
+    console.error('Auto-matcher failed:', err);
+  }
+};
 
 // @route GET /api/properties
 // Get all properties
@@ -45,6 +87,10 @@ router.post('/', protect, async (req, res, next) => {
       ...req.body,
       agent: req.user._id,
     });
+    
+    // Run background matcher without blocking response
+    matchPropertyToLeads(property);
+    
     res.status(201).json({ success: true, property });
   } catch (err) {
     next(err);

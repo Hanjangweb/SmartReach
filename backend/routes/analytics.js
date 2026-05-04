@@ -1,5 +1,6 @@
 const express = require('express');
 const Lead = require('../models/Lead');
+const axios = require('axios');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
@@ -269,6 +270,66 @@ router.get('/hot-leads', protect, async (req, res, next) => {
     res.json({ success: true, hotLeads });
   } catch (err) {
     next(err);
+  }
+});
+
+// @route GET /api/analytics/forecast
+// AI Predictive Revenue Forecasting
+router.get('/forecast', protect, async (req, res, next) => {
+  try {
+    const filter = { status: { $nin: ['Closed', 'Lost'] }, isArchived: false };
+    if (req.user.role !== 'admin') {
+      filter.agent = req.user._id;
+    }
+
+    const leads = await Lead.find(filter).select('name budget leadScore status');
+
+    let totalExpectedRevenue = 0;
+    let hotExpected = 0;
+    let warmExpected = 0;
+    const commissionRate = 0.02; // Assuming 2% average commission
+
+    leads.forEach(lead => {
+      let probability = 0.05; // Base probability for Unscored
+      if (lead.leadScore === 'Hot') probability = 0.80;
+      else if (lead.leadScore === 'Warm') probability = 0.40;
+      else if (lead.leadScore === 'Cold') probability = 0.10;
+
+      // Budget is in Lakhs, so let's keep revenue in Lakhs
+      const expected = (lead.budget || 0) * commissionRate * probability;
+      totalExpectedRevenue += expected;
+
+      if (lead.leadScore === 'Hot') hotExpected += expected;
+      if (lead.leadScore === 'Warm') warmExpected += expected;
+    });
+
+    res.json({
+      success: true,
+      forecast: {
+        totalExpectedRevenueLakhs: totalExpectedRevenue.toFixed(2),
+        hotExpectedLakhs: hotExpected.toFixed(2),
+        warmExpectedLakhs: warmExpected.toFixed(2),
+        activeLeadsCount: leads.length
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// @route POST /api/analytics/forecast/insight
+// Proxy to AI service for forecast insight
+router.post('/forecast/insight', protect, async (req, res, next) => {
+  try {
+    if (req.user.plan === 'free') {
+      return res.json({ success: true, insight: "Upgrade to Advanced Plan to unlock AI Financial Forecasting!" });
+    }
+
+    const aiResponse = await axios.post(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/insight/forecast`, req.body);
+    res.json({ success: true, insight: aiResponse.data.insight });
+  } catch (err) {
+    console.error('AI Forecast Proxy Error:', err.message);
+    res.json({ success: true, insight: "AI is currently analyzing the market. Check back later." });
   }
 });
 

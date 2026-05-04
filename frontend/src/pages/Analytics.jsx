@@ -15,6 +15,8 @@ export default function Analytics() {
   const [responseTime, setResponseTime] = useState(null);
   const [propertyPerformance, setPropertyPerformance] = useState(null);
   const [hotLeads, setHotLeads] = useState([]);
+  const [forecast, setForecast] = useState(null);
+  const [forecastInsight, setForecastInsight] = useState('');
 
   useEffect(() => {
     fetchAnalytics();
@@ -23,12 +25,13 @@ export default function Analytics() {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const [funnelRes, sourceRes, responseRes, propertyRes, hotRes] = await Promise.all([
+      const [funnelRes, sourceRes, responseRes, propertyRes, hotRes, forecastRes] = await Promise.all([
         api.get('/analytics/funnel'),
         api.get('/analytics/source-roi'),
         api.get('/analytics/response-time'),
         api.get('/analytics/property-performance'),
         api.get('/analytics/hot-leads'),
+        api.get('/analytics/forecast')
       ]);
 
       setFunnel(funnelRes.data.funnel);
@@ -37,11 +40,26 @@ export default function Analytics() {
       setResponseTime(responseRes.data.responseTime);
       setPropertyPerformance(propertyRes.data);
       setHotLeads(hotRes.data.hotLeads);
+      
+      const forecastData = forecastRes.data.forecast;
+      setForecast(forecastData);
+
+      // Fetch AI insight for forecast
+      api.post('/analytics/forecast/insight', forecastData)
+         .then(res => setForecastInsight(res.data.insight))
+         .catch(err => setForecastInsight('Unable to generate AI forecast at this time.'));
+         
     } catch (err) {
       toast.error('Failed to fetch analytics');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Safe guard: prevent division by zero in funnel calculation
+  const safeFunnelPercentage = (value, max) => {
+    if (!max || max === 0) return 5; // Show a tiny bar to indicate the stage
+    return Math.max(5, (value / max) * 100);
   };
 
   if (!user?.plan || user.plan === 'free') {
@@ -80,6 +98,45 @@ export default function Analytics() {
 
       {!loading && (
         <div className="analytics-grid">
+          {/* AI Predictive Revenue Forecast */}
+          {forecast && (
+            <motion.div className="glass-card-elevated p-6 col-span-2" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05), transparent)', borderColor: 'rgba(16, 185, 129, 0.2)' }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="flex items-center gap-2 mb-6">
+                <Flame size={20} className="text-emerald" />
+                <h3 className="text-emerald">AI Predictive Revenue Forecast</h3>
+              </div>
+              <div className="flex flex-col md:flex-row gap-6" style={{ flexWrap: 'wrap' }}>
+                <div className="flex-1">
+                  <div className="text-sm text-secondary uppercase tracking-wider mb-1">Total Expected Pipeline</div>
+                  <div className="text-4xl font-bold text-primary mb-4">₹{forecast.totalExpectedRevenueLakhs}L</div>
+                  <div className="grid grid-2 gap-4">
+                    <div className="bg-white/5 p-3 rounded border border-white/5">
+                      <div className="text-xs text-secondary mb-1">From Hot Leads</div>
+                      <div className="font-bold text-amber">₹{forecast.hotExpectedLakhs}L</div>
+                    </div>
+                    <div className="bg-white/5 p-3 rounded border border-white/5">
+                      <div className="text-xs text-secondary mb-1">From Warm Leads</div>
+                      <div className="font-bold text-blue-400">₹{forecast.warmExpectedLakhs}L</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 bg-black/20 p-4 rounded-xl border border-emerald/10 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald/10 rounded-full blur-3xl -mr-10 -mt-10" />
+                  <h4 className="text-sm font-bold text-emerald mb-2 flex items-center gap-2">
+                    <span className="text-lg">🤖</span> Strategic Analyst
+                  </h4>
+                  {forecastInsight ? (
+                    <p className="text-sm text-secondary leading-relaxed relative z-10">{forecastInsight}</p>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-secondary h-full relative z-10">
+                      <span className="spinner w-4 h-4" /> AI is calculating your revenue trajectory...
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* Conversion Funnel */}
           {funnel && (
             <motion.div
@@ -100,8 +157,8 @@ export default function Analytics() {
                   { label: 'Negotiation', value: funnel.negotiation, color: '#f59e0b' },
                   { label: 'Closed', value: funnel.closed, color: '#10b981' },
                 ].map((stage, i) => {
-                  const maxValue = funnel.new;
-                  const percentage = (stage.value / maxValue) * 100;
+                  const maxValue = funnel.new || 1; // Prevent division by zero
+                  const percentage = safeFunnelPercentage(stage.value, maxValue);
                   return (
                     <div key={i} className="funnel-stage">
                       <div className="flex justify-between items-center mb-2">

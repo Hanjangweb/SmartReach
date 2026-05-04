@@ -410,11 +410,12 @@ a:hover { color: var(--indigo-300, #a5b4fc); }
 
 @media (max-width: 768px) {
   .main-content { margin-left: 0 !important; }
-  .page-content { padding: 16px; }
-  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .page-header h1 { font-size: 1.5rem; }
+  .page-content { padding: 12px 14px 80px; } /* bottom padding for thumb reach */
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; gap: 12px; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .page-header h1 { font-size: 1.35rem; }
 
+  /* Sidebar mobile behaviour */
   .sidebar {
     transform: translateX(-100%);
     z-index: 1000;
@@ -431,6 +432,23 @@ a:hover { color: var(--indigo-300, #a5b4fc); }
     z-index: 999;
     animation: fadeIn 0.3s ease;
   }
+
+  /* Cards */
+  .glass-card, .glass-card-elevated { border-radius: var(--radius-md); }
+  .p-6 { padding: 16px; }
+  .p-8 { padding: 20px; }
+
+  /* Buttons on mobile */
+  .btn { font-size: 0.85rem; }
+  .status-btns { gap: 6px; }
+  .status-btns .btn { padding: 6px 10px; font-size: 0.78rem; }
+
+  /* Modals */
+  .modal-overlay { padding: 0.5rem; align-items: flex-end; }
+  .checkout-modal { border-radius: 1.5rem 1.5rem 0 0; max-width: 100%; }
+
+  /* col-span-2 should fill 1 col on mobile */
+  .col-span-2 { grid-column: span 1 !important; }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

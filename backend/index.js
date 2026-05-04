@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -21,9 +22,16 @@ const remindersAdvancedRoutes = require('./routes/reminders-advanced');
 const analyticsRoutes = require('./routes/analytics');
 const templatesRoutes = require('./routes/templates');
 const adminRoutes = require('./routes/admin');
+const agencyRoutes = require('./routes/agency');
+const publicRoutes = require('./routes/public');
+const webhookRoutes = require('./routes/webhooks');
+const voiceRoutes = require('./routes/voice');
 const paymentRoutes = require('./routes/payment');
 const plansRoutes = require('./routes/plans');
 const propertiesRoutes = require('./routes/properties');
+const automationsRoutes = require('./routes/automations');
+const driveRoutes = require('./routes/drive');
+const initCronJobs = require('./jobs/cron');
 const dealsRoutes = require('./routes/deals');
 const supportRoutes = require('./routes/support');
 const apiV1Routes = require('./routes/api_v1');
@@ -85,6 +93,9 @@ app.use(express.json({ limit: '10mb' }));
 
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static uploads for documents
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
@@ -116,9 +127,15 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/reminders', remindersAdvancedRoutes);
 app.use('/api/templates', templatesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/agency', agencyRoutes);
+app.use('/api/public', publicRoutes);
+app.use('/api/webhooks', webhookRoutes);
+app.use('/api/voice', voiceRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/plans', plansRoutes);
 app.use('/api/properties', propertiesRoutes);
+app.use('/api/automations', automationsRoutes);
+app.use('/api/drive', driveRoutes);
 app.use('/api/deals', dealsRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/v1', apiV1Routes);
@@ -145,6 +162,9 @@ app.use((req, res) => {
 
 // Global error handler
 app.use(errorHandler);
+
+// Initialize Background Cron Jobs
+initCronJobs();
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

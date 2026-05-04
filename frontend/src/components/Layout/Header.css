@@ -106,12 +106,61 @@
 .header-user { cursor: pointer; }
 
 @media (max-width: 768px) {
-  .header { left: 0; padding: 0 16px; gap: 8px; }
-  .header-search { max-width: 140px; padding: 6px 12px; }
-  .header-menu-btn { display: flex; }
-  .header-left { gap: 8px; }
-  .header-right { gap: 8px; }
-  .header-right .btn-primary { padding: 6px; }
-  .header-right .btn-primary svg { margin: 0; }
-  .header-right .btn-primary span { display: none; }
+  .header {
+    left: 0;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .header-menu-btn {
+    display: flex;
+    padding: 8px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+  .header-left {
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  .header-search {
+    max-width: none;
+    flex: 1;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+  .header-search-input {
+    font-size: 0.85rem;
+  }
+  .header-right {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  /* Collapse "Add Lead" to icon-only on mobile */
+  .header-right .btn-primary {
+    padding: 7px 8px;
+    min-width: 34px;
+  }
+  .header-right .btn-primary span {
+    display: none;
+  }
+  .header-right .btn-primary svg {
+    margin: 0;
+  }
+  .header-icon-btn {
+    padding: 7px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Hide the search bar on small phones — use the leads page search instead */
+  .header-search {
+    display: none;
+  }
+  .header {
+    padding: 0 10px;
+    gap: 6px;
+  }
+  .header-right {
+    gap: 5px;
+  }
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, MapPin, Edit3, Trash2, Home, Search, Filter } from 'lucide-react';
+import { Plus, MapPin, Edit3, Trash2, Home, Search, Filter, ExternalLink, Copy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import api from '../lib/api';
@@ -95,6 +95,12 @@ export default function Properties() {
     setShowForm(false);
   };
 
+  const copyLandingPageLink = (id) => {
+    const url = `${window.location.origin}/p/${id}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Landing page link copied!');
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -182,12 +188,17 @@ export default function Properties() {
                 
                 <div className="property-footer">
                   <span className="property-type">{prop.type}</span>
-                  {(prop.agent?._id === user?._id || user?.role === 'admin') && (
-                    <div className="flex gap-2">
-                      <button className="action-btn edit-btn" onClick={() => handleEdit(prop)}><Edit3 size={16} /></button>
-                      <button className="action-btn delete-btn" onClick={() => handleDelete(prop._id)}><Trash2 size={16} /></button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    <button className="action-btn" title="Copy Landing Page Link" onClick={() => copyLandingPageLink(prop._id)} style={{ color: 'var(--emerald)' }}>
+                      <Copy size={16} />
+                    </button>
+                    {(prop.agent?._id === user?._id || user?.role === 'admin') && (
+                      <>
+                        <button className="action-btn edit-btn" onClick={() => handleEdit(prop)}><Edit3 size={16} /></button>
+                        <button className="action-btn delete-btn" onClick={() => handleDelete(prop._id)}><Trash2 size={16} /></button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -111,3 +111,10 @@
   color: var(--indigo-400);
   border-radius: 4px;
 }
+
+@media (max-width: 768px) {
+  .properties-grid { grid-template-columns: 1fr; gap: 12px; }
+  .property-image { height: 150px; }
+  .property-footer { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .property-footer .btn { width: 100%; justify-content: center; }
+}
