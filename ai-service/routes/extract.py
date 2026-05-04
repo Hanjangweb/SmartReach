@@ -48,7 +48,9 @@ Rules:
         
         extracted = json.loads(result)
         return {"extracted": extracted}
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Failed to parse extracted data")
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse extracted data: {str(e)}")
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=f"AI service temporarily unavailable: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Extraction failed: {str(e)}")

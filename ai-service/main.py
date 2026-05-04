@@ -5,6 +5,12 @@ import os
 
 load_dotenv()
 
+# Validate required environment variables
+required_vars = ["OPENROUTER_API_KEY"]
+missing_vars = [var for var in required_vars if not os.getenv(var)]
+if missing_vars:
+    raise RuntimeError(f"Missing required environment variables: {', '.join(missing_vars)}")
+
 from routes.reply import router as reply_router
 from routes.extract import router as extract_router
 from routes.score import router as score_router
@@ -36,4 +42,4 @@ def health():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
