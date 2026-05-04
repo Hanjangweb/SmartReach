@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Phone, MapPin, Edit3, MessageSquare, Bot, Copy,
-  Bell, Star, Calendar, Send, ExternalLink, Zap, Home
+  Bell, Star, Calendar, Send, ExternalLink, Zap, Home, Search
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
@@ -31,6 +31,8 @@ export default function LeadDetail() {
   const [agents, setAgents] = useState([]);
   const [properties, setProperties] = useState([]);
   const [loadingProps, setLoadingProps] = useState(false);
+  const [matches, setMatches] = useState([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
   const [showDealModal, setShowDealModal] = useState(false);
   const [dealForm, setDealForm] = useState({ saleValue: '', commissionRate: 2, agentSplit: 50 });
 
@@ -51,7 +53,26 @@ export default function LeadDetail() {
       setLoadingProps(true);
       api.get('/properties').then(r => setProperties(r.data.properties || [])).finally(() => setLoadingProps(false));
     }
+    if (tab === 'ai-matches' && matches.length === 0) {
+      fetchMatches();
+    }
   }, [tab]);
+
+  const fetchMatches = async () => {
+    setLoadingMatches(true);
+    try {
+      const r = await api.get(`/leads/${id}/matches`);
+      setMatches(r.data.matches || []);
+      if (r.data.matches?.length > 0) toast.success('Found best matches!');
+    } catch (err) {
+      if (err.response?.status === 403) {
+        toast.error(err.response.data.message || 'Advanced Plan Required for AI Matcher', { icon: '✨' });
+      } else {
+        toast.error('Failed to load AI matches');
+      }
+    }
+    setLoadingMatches(false);
+  };
 
   const suggestProperty = async (prop) => {
     const message = `Hi ${lead?.name},\nI thought you might be interested in this property based on your requirements:\n\n*${prop.title}*\nLocation: ${prop.location}\nPrice: ₹${prop.price} Lakhs\nType: ${prop.type}\n\nLet me know if you'd like to schedule a site visit!`;
@@ -318,7 +339,10 @@ export default function LeadDetail() {
               <Zap size={16} /> Insight
             </button>
             <button className={`detail-tab ${tab === 'properties' ? 'active' : ''}`} onClick={() => setTab('properties')} id="tab-properties">
-              <Home size={16} /> Recommend
+              <Home size={16} /> Catalog
+            </button>
+            <button className={`detail-tab ${tab === 'ai-matches' ? 'active' : ''}`} onClick={() => setTab('ai-matches')} id="tab-ai-matches">
+              <Search size={16} /> AI Matcher
             </button>
             <button className={`detail-tab ${tab === 'reminder' ? 'active' : ''}`} onClick={() => setTab('reminder')} id="tab-reminder">
               <Bell size={16} /> Reminder
@@ -428,7 +452,7 @@ export default function LeadDetail() {
             {/* Properties Tab */}
             {tab === 'properties' && (
               <div className="flex flex-col gap-4">
-                <h4 className="text-primary font-semibold flex items-center gap-2"><Home size={16}/> Recommend Properties</h4>
+                <h4 className="text-primary font-semibold flex items-center gap-2"><Home size={16}/> Property Catalog</h4>
                 {loadingProps ? (
                   <div className="p-4 text-center text-muted">Loading catalog...</div>
                 ) : properties.length === 0 ? (
@@ -444,6 +468,58 @@ export default function LeadDetail() {
                         <button className="btn btn-primary btn-sm px-3 py-1 text-xs" onClick={() => suggestProperty(prop)}>
                           <MessageSquare size={12} /> Suggest
                         </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AI Matches Tab */}
+            {tab === 'ai-matches' && (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-emerald font-semibold flex items-center gap-2"><Search size={16}/> Top AI Matches</h4>
+                  <button className="btn btn-secondary btn-sm" onClick={fetchMatches} disabled={loadingMatches}>
+                    <Zap size={14} /> Re-scan
+                  </button>
+                </div>
+                {loadingMatches ? (
+                  <div className="p-8 flex flex-col items-center justify-center gap-3">
+                    <span className="spinner" style={{ width: 24, height: 24, borderWidth: 3 }} />
+                    <p className="text-sm text-muted">AI is analyzing catalog & lead preferences...</p>
+                  </div>
+                ) : matches.length === 0 ? (
+                  <div className="empty-state p-4">
+                    <span className="empty-state-icon">🤖</span>
+                    <p>No highly suitable matches found or you need the Advanced Plan.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {matches.map((match, idx) => (
+                      <div key={match.propertyId} className="glass-card p-4 flex flex-col gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: idx === 0 ? '1px solid var(--emerald)' : undefined }}>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              {idx === 0 && <span className="badge bg-emerald/20 text-emerald border border-emerald/30">#1 Best Match</span>}
+                              <h5 className="font-bold text-primary m-0">{match.property.title}</h5>
+                            </div>
+                            <div className="text-xs text-muted mt-1">{match.property.location} • ₹{match.property.price}L • {match.property.type}</div>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span className="text-lg font-bold text-emerald">{match.score}%</span>
+                            <span className="text-[10px] text-muted uppercase tracking-wide">Match Score</span>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-white/5 rounded-lg border border-white/10 text-sm">
+                          <span className="font-semibold text-amber mr-2">Why it fits:</span>
+                          {match.reason}
+                        </div>
+                        <div className="flex justify-end mt-1">
+                          <button className="btn btn-primary btn-sm" onClick={() => suggestProperty(match.property)}>
+                            <MessageSquare size={13} /> Suggest to Lead
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

@@ -23,17 +23,22 @@ export default function AIExtract() {
   const navigate = useNavigate();
 
   const handleExtract = async () => {
-    if (user?.plan === 'free') {
-      toast.error('AI Lead Extraction requires a Pro plan!', { icon: '✨' });
-      return;
-    }
     if (!text.trim()) { toast.error('Paste some text first'); return; }
     setLoading(true);
     setExtractedLeads([]);
     try {
       const r = await api.post('/ai/extract', { text });
-      setExtractedLeads(Array.isArray(r.data.extracted) ? r.data.extracted : [r.data.extracted]);
-      toast.success(`Extracted ${r.data.extracted.length} lead(s) successfully!`);
+      let leads = Array.isArray(r.data.extracted) ? r.data.extracted : [r.data.extracted];
+      
+      // Limit Basic AI Extraction for Free Users
+      if (user?.plan === 'free' && leads.length > 1) {
+        leads = [leads[0]];
+        toast.error('Basic AI extracts 1 lead at a time. Upgrade to Pro for Bulk Extraction!', { icon: '✨', duration: 5000 });
+      } else {
+        toast.success(`Extracted ${leads.length} lead(s) successfully!`);
+      }
+      
+      setExtractedLeads(leads);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Extraction failed');
     }

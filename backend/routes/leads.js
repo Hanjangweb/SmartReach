@@ -2,6 +2,8 @@ const express = require('express');
 const Lead = require('../models/Lead');
 const Note = require('../models/Note');
 const Plan = require('../models/Plan');
+const Property = require('../models/Property');
+const axios = require('axios');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
@@ -210,6 +212,56 @@ router.put('/:id/assign', protect, async (req, res, next) => {
     });
 
     res.json({ success: true, lead });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// @route GET /api/leads/:id/matches
+// @desc Get AI property matches for a lead
+router.get('/:id/matches', protect, async (req, res, next) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    if (lead.agent.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    if (req.user.plan === 'free') {
+      return res.status(403).json({ success: false, message: 'AI Property Matcher requires Advanced plan' });
+    }
+
+    // Fetch user's available properties
+    const properties = await Property.find({ agent: req.user._id, status: 'Available', isArchived: false });
+    
+    if (!properties.length) {
+      return res.json({ success: true, matches: [] });
+    }
+
+    const payload = {
+      lead_budget: lead.budget || 0,
+      lead_location: lead.location || '',
+      lead_type: lead.propertyType || '',
+      lead_requirement: lead.requirement || '',
+      properties: properties.map(p => ({
+        id: p._id.toString(),
+        title: p.title,
+        type: p.type,
+        price: p.price,
+        location: p.location,
+        description: p.description
+      }))
+    };
+
+    const aiRes = await axios.post(`${process.env.AI_SERVICE_URL}/ai/match`, payload);
+    
+    // Attach property details to the matches
+    const matches = aiRes.data.matches.map(m => {
+      const prop = properties.find(p => p._id.toString() === m.propertyId);
+      return { ...m, property: prop };
+    }).filter(m => m.property); // remove any matches where property wasn't found
+
+    res.json({ success: true, matches });
   } catch (err) {
     next(err);
   }

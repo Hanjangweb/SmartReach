@@ -16,6 +16,7 @@ from routes.extract import router as extract_router
 from routes.score import router as score_router
 from routes.generate_template import router as generate_template_router
 from routes.insight import router as insight_router
+from routes.match import router as match_router
 
 app = FastAPI(
     title="SmartReach AI Service",
@@ -38,6 +39,7 @@ app.include_router(extract_router, prefix="/ai", tags=["Lead Extraction"])
 app.include_router(score_router, prefix="/ai", tags=["Lead Scoring"])
 app.include_router(generate_template_router, prefix="/ai", tags=["AI Template Generation"])
 app.include_router(insight_router, prefix="/ai", tags=["AI Insight"])
+app.include_router(match_router, prefix="/ai", tags=["AI Property Matcher"])
 
 @app.get("/health")
 def health():

@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Plus, Phone, MapPin, IndianRupee, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Plus, Phone, MapPin, IndianRupee, Trash2, Eye, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import useLeadStore from '../store/leadStore';
@@ -36,12 +36,59 @@ export default function Leads() {
     setFilters({ search: e.target.value });
   }, []);
 
+  const exportToCSV = () => {
+    if (user?.plan === 'free') {
+      toast.error('CSV Export requires the Pro plan!', { icon: '✨' });
+      return;
+    }
+    
+    if (leads.length === 0) {
+      toast.error('No leads to export');
+      return;
+    }
+
+    const headers = ['Name', 'Phone', 'Email', 'Property Type', 'Budget (Lakhs)', 'Location', 'Status', 'Source', 'Lead Score', 'Created At'];
+    
+    const csvContent = [
+      headers.join(','),
+      ...leads.map(lead => {
+        return [
+          `"${lead.name || ''}"`,
+          `"${lead.phone || ''}"`,
+          `"${lead.email || ''}"`,
+          `"${lead.propertyType || ''}"`,
+          lead.budget || 0,
+          `"${lead.location || ''}"`,
+          `"${lead.status || ''}"`,
+          `"${lead.source || ''}"`,
+          lead.leadScore || 0,
+          `"${new Date(lead.createdAt).toLocaleDateString('en-IN')}"`
+        ].join(',');
+      })
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `leads_export_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Leads exported successfully!');
+  };
+
   return (
     <div>
       <div className="page-header">
         <div>
           <h1>Leads</h1>
           <p className="text-secondary text-sm mt-2">{pagination.total} total leads</p>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn btn-secondary" onClick={exportToCSV}>
+            <Download size={16} /> Export CSV
+          </button>
         </div>
       </div>
 
