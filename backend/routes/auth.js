@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 
@@ -74,6 +75,22 @@ router.put('/profile', protect, async (req, res, next) => {
       { new: true, runValidators: true }
     );
     res.json({ success: true, user });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// @route POST /api/auth/api-key
+router.post('/api-key', protect, async (req, res, next) => {
+  try {
+    if (req.user.plan !== 'advanced' && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Requires Advanced Plan' });
+    }
+
+    const apiKey = `sr_${crypto.randomBytes(24).toString('hex')}`;
+    const user = await User.findByIdAndUpdate(req.user._id, { apiKey }, { new: true });
+    
+    res.json({ success: true, apiKey: user.apiKey });
   } catch (err) {
     next(err);
   }

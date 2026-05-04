@@ -170,4 +170,67 @@ router.post('/suggest-followup', protect, checkPlan, async (req, res, next) => {
   }
 });
 
+// @route POST /api/ai/generate-template
+// AI generates a message template
+router.post('/generate-template', protect, checkPlan, async (req, res, next) => {
+  try {
+    const { name, category } = req.body;
+    
+    const payload = {
+      name,
+      category,
+      agentName: req.user.name,
+    };
+
+    const response = await axios.post(`${AI_SERVICE_URL}/ai/generate-template`, payload, { timeout: 30000 });
+    res.json({ success: true, content: response.data.content });
+  } catch (err) {
+    if (err.code === 'ECONNREFUSED') {
+      return res.status(503).json({ success: false, message: 'AI service unavailable' });
+    }
+    next(err);
+  }
+});
+
+// @route POST /api/ai/insight
+// Generate actionable AI insights for a lead
+router.post('/insight', protect, checkPlan, async (req, res, next) => {
+  try {
+    const { leadId } = req.body;
+    
+    const query = { _id: leadId };
+    if (req.user.role !== 'admin') query.agent = req.user._id;
+    const lead = await Lead.findOne(query);
+
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+
+    // Fetch recent notes for context
+    const notes = await Note.find({ lead: leadId })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const payload = {
+      lead: {
+        name: lead.name,
+        propertyType: lead.propertyType,
+        budget: lead.budget,
+        location: lead.location,
+        requirement: lead.requirement,
+        status: lead.status,
+        leadScore: lead.leadScore,
+        scorePercentage: lead.scorePercentage,
+        notes: notes.map(n => n.content),
+      }
+    };
+
+    const response = await axios.post(`${AI_SERVICE_URL}/ai/insight`, payload, { timeout: 30000 });
+    res.json({ success: true, insight: response.data.insight });
+  } catch (err) {
+    if (err.code === 'ECONNREFUSED') {
+      return res.status(503).json({ success: false, message: 'AI service unavailable' });
+    }
+    next(err);
+  }
+});
+
 module.exports = router;

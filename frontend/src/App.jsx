@@ -15,6 +15,8 @@ import AIExtract from './pages/AIExtract';
 import Settings from './pages/Settings';
 import AdminDashboard from './pages/AdminDashboard';
 import Pricing from './pages/Pricing';
+import Properties from './pages/Properties';
+import Deals from './pages/Deals';
 import NotificationManager from './components/NotificationManager';
 
 
@@ -51,6 +53,8 @@ export default function App() {
           <Route path="leads/:id" element={<LeadDetail />} />
           <Route path="reminders" element={<Reminders />} />
           <Route path="reminders-manager" element={<RemindersManager />} />
+          <Route path="properties" element={<Properties />} />
+          <Route path="deals" element={<Deals />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="templates" element={<Templates />} />
           <Route path="ai/extract" element={<AIExtract />} />

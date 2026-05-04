@@ -14,6 +14,8 @@ if missing_vars:
 from routes.reply import router as reply_router
 from routes.extract import router as extract_router
 from routes.score import router as score_router
+from routes.generate_template import router as generate_template_router
+from routes.insight import router as insight_router
 
 app = FastAPI(
     title="SmartReach AI Service",
@@ -34,6 +36,8 @@ app.add_middleware(
 app.include_router(reply_router, prefix="/ai", tags=["AI Reply"])
 app.include_router(extract_router, prefix="/ai", tags=["Lead Extraction"])
 app.include_router(score_router, prefix="/ai", tags=["Lead Scoring"])
+app.include_router(generate_template_router, prefix="/ai", tags=["AI Template Generation"])
+app.include_router(insight_router, prefix="/ai", tags=["AI Insight"])
 
 @app.get("/health")
 def health():

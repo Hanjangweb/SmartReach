@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema(
     },
     password: { type: String, required: [true, 'Password is required'], minlength: 6, select: false },
     plan: { type: String, enum: ['free', 'pro', 'advanced'], default: 'free' },
+    apiKey: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     avatar: { type: String, default: '' },
     phone: { type: String, default: '' },

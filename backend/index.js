@@ -23,6 +23,10 @@ const templatesRoutes = require('./routes/templates');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
 const plansRoutes = require('./routes/plans');
+const propertiesRoutes = require('./routes/properties');
+const dealsRoutes = require('./routes/deals');
+const supportRoutes = require('./routes/support');
+const apiV1Routes = require('./routes/api_v1');
 
 
 const app = express();
@@ -114,6 +118,10 @@ app.use('/api/templates', templatesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/plans', plansRoutes);
+app.use('/api/properties', propertiesRoutes);
+app.use('/api/deals', dealsRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/v1', apiV1Routes);
 
 
 // Socket.IO events

@@ -10,6 +10,7 @@ export default function Analytics() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [funnel, setFunnel] = useState(null);
+  const [conversionRate, setConversionRate] = useState(0);
   const [sourceROI, setSourceROI] = useState([]);
   const [responseTime, setResponseTime] = useState(null);
   const [propertyPerformance, setPropertyPerformance] = useState(null);
@@ -31,6 +32,7 @@ export default function Analytics() {
       ]);
 
       setFunnel(funnelRes.data.funnel);
+      setConversionRate(funnelRes.data.conversionRate);
       setSourceROI(sourceRes.data.sourceROI);
       setResponseTime(responseRes.data.responseTime);
       setPropertyPerformance(propertyRes.data);
@@ -114,7 +116,7 @@ export default function Analytics() {
 
               <div className="mt-6 p-4 bg-white/5 rounded-lg">
                 <p className="text-sm text-secondary">Overall Conversion Rate</p>
-                <p className="text-2xl font-bold text-emerald">{funnel ? `${funnel.conversionRate}%` : '0%'}</p>
+                <p className="text-2xl font-bold text-emerald">{funnel ? `${conversionRate}%` : '0%'}</p>
               </div>
             </motion.div>
           )}

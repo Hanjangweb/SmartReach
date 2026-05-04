@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, Edit2, Copy, MessageSquare } from 'lucide-react';
+import { Plus, Trash2, Edit2, Copy, MessageSquare, Bot } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import api from '../lib/api';
@@ -22,6 +22,7 @@ export default function TemplatesManager() {
   const [selectedCategory, setSelectedCategory] = useState('first-contact');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [form, setForm] = useState({
     name: '',
     category: 'first-contact',
@@ -43,6 +44,31 @@ export default function TemplatesManager() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateTemplate = async () => {
+    if (!form.name) {
+      toast.error('Please enter a Template Name first');
+      return;
+    }
+    
+    if (user?.plan === 'free') {
+      toast.error('AI Template Generation is a Pro feature!', { icon: '✨' });
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      const res = await api.post('/ai/generate-template', {
+        name: form.name,
+        category: CATEGORIES.find(c => c.id === form.category)?.label || form.category
+      });
+      setForm({ ...form, content: res.data.content });
+      toast.success('Template generated!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to generate template');
+    }
+    setAiGenerating(false);
   };
 
   const handleSave = async () => {
@@ -179,7 +205,16 @@ export default function TemplatesManager() {
               </select>
             </div>
             <div className="form-group col-span-2">
-              <label className="form-label">Message Content *</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="form-label mb-0">Message Content *</label>
+                <button 
+                  className="btn btn-sm btn-secondary text-indigo"
+                  onClick={generateTemplate}
+                  disabled={aiGenerating}
+                >
+                  {aiGenerating ? <span className="spinner" /> : <><Bot size={14} /> Generate with AI</>}
+                </button>
+              </div>
               <textarea
                 className="form-textarea"
                 placeholder="Type your message template here... You can use {{name}}, {{property}}, {{budget}} variables"

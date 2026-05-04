@@ -15,7 +15,7 @@ const SAMPLE_TEXTS = [
 
 export default function AIExtract() {
   const [text, setText] = useState('');
-  const [extracted, setExtracted] = useState(null);
+  const [extractedLeads, setExtractedLeads] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
    const { createLead } = useLeadStore();
@@ -29,42 +29,60 @@ export default function AIExtract() {
     }
     if (!text.trim()) { toast.error('Paste some text first'); return; }
     setLoading(true);
-    setExtracted(null);
+    setExtractedLeads([]);
     try {
       const r = await api.post('/ai/extract', { text });
-      setExtracted(r.data.extracted);
-      toast.success('Lead extracted successfully!');
+      setExtractedLeads(Array.isArray(r.data.extracted) ? r.data.extracted : [r.data.extracted]);
+      toast.success(`Extracted ${r.data.extracted.length} lead(s) successfully!`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Extraction failed');
     }
     setLoading(false);
   };
 
-  const handleSaveLead = async () => {
-    if (!extracted) return;
+  const handleSaveLeads = async () => {
+    if (extractedLeads.length === 0) return;
     setSaving(true);
-    const data = {
-      name: extracted.name || 'Unknown',
-      phone: (extracted.phone || '').toString().replace(/\D/g, ''),
-      email: extracted.email || '',
-      propertyType: extracted.propertyType || 'Other',
-      budget: parseFloat(extracted.budget) || 0,
-      location: extracted.location || '',
-      requirement: extracted.requirement || '',
-      source: extracted.source || 'Direct',
-      status: 'New',
-    };
-    const r = await createLead(data);
+    let successCount = 0;
+    
+    for (const lead of extractedLeads) {
+      const data = {
+        name: lead.name || 'Unknown',
+        phone: (lead.phone || '').toString().replace(/\D/g, ''),
+        email: lead.email || '',
+        propertyType: lead.propertyType || 'Other',
+        budget: parseFloat(lead.budget) || 0,
+        location: lead.location || '',
+        requirement: lead.requirement || '',
+        source: lead.source || 'Direct',
+        status: 'New',
+      };
+      
+      const r = await createLead(data);
+      if (r.success) successCount++;
+    }
+    
     setSaving(false);
-    if (r.success) {
-      toast.success('Lead saved!');
-      navigate(`/leads/${r.lead._id}`);
+    if (successCount > 0) {
+      toast.success(`Saved ${successCount} lead(s)!`);
+      if (successCount === 1) {
+        // Find the last saved lead's ID if we only had one (actually, we can just navigate to /leads)
+        navigate('/leads');
+      } else {
+        navigate('/leads');
+      }
     } else {
-      toast.error(r.message || 'Failed to save');
+      toast.error('Failed to save leads');
     }
   };
 
-  const update = (k, v) => setExtracted((prev) => ({ ...prev, [k]: v }));
+  const updateLead = (index, k, v) => {
+    setExtractedLeads((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [k]: v };
+      return updated;
+    });
+  };
 
   return (
     <div>
@@ -105,65 +123,71 @@ export default function AIExtract() {
             <button className="btn btn-primary btn-lg flex-1" onClick={handleExtract} disabled={loading || !text.trim()} id="extract-btn">
               {loading ? <><span className="spinner" /> Analyzing...</> : <><Sparkles size={18} /> Extract Lead Info</>}
             </button>
-            {text && <button className="btn btn-secondary" onClick={() => { setText(''); setExtracted(null); }}>Clear</button>}
+            {text && <button className="btn btn-secondary" onClick={() => { setText(''); setExtractedLeads([]); }}>Clear</button>}
           </div>
         </motion.div>
 
         {/* Extracted Result */}
-        {extracted && (
-          <motion.div className="glass-card-elevated p-6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <div className="flex items-center justify-between mb-4">
+        {extractedLeads.length > 0 && (
+          <motion.div className="glass-card-elevated p-6 flex flex-col gap-6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Check size={20} className="text-emerald" />
-                <h3>Extracted Data</h3>
+                <h3>Extracted Leads ({extractedLeads.length})</h3>
               </div>
               <span className="badge badge-closed">✓ Ready to Save</span>
             </div>
 
-            <div className="extracted-fields">
-              {[
-                { key: 'name', label: 'Name', type: 'text' },
-                { key: 'phone', label: 'Phone', type: 'text' },
-                { key: 'email', label: 'Email', type: 'email' },
-                { key: 'location', label: 'Location', type: 'text' },
-                { key: 'budget', label: 'Budget (₹ Lakhs)', type: 'number' },
-                { key: 'requirement', label: 'Requirement', type: 'text' },
-              ].map(({ key, label, type }) => (
-                <div className="form-group" key={key}>
-                  <label className="form-label">{label}</label>
-                  <input
-                    className="form-input"
-                    type={type}
-                    value={extracted[key] || ''}
-                    onChange={(e) => update(key, e.target.value)}
-                    placeholder={`${label} not found`}
-                    id={`ext-${key}`}
-                  />
+            <div className="extracted-leads-list flex flex-col gap-8">
+              {extractedLeads.map((extracted, index) => (
+                <div key={index} className="extracted-lead-card p-4 rounded-xl border border-border" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  <h4 className="mb-4 text-primary font-semibold">Lead #{index + 1}</h4>
+                  <div className="extracted-fields">
+                    {[
+                      { key: 'name', label: 'Name', type: 'text' },
+                      { key: 'phone', label: 'Phone', type: 'text' },
+                      { key: 'email', label: 'Email', type: 'email' },
+                      { key: 'location', label: 'Location', type: 'text' },
+                      { key: 'budget', label: 'Budget (₹ Lakhs)', type: 'number' },
+                      { key: 'requirement', label: 'Requirement', type: 'text' },
+                    ].map(({ key, label, type }) => (
+                      <div className="form-group" key={key}>
+                        <label className="form-label">{label}</label>
+                        <input
+                          className="form-input"
+                          type={type}
+                          value={extracted[key] || ''}
+                          onChange={(e) => updateLead(index, key, e.target.value)}
+                          placeholder={`${label} not found`}
+                        />
+                      </div>
+                    ))}
+
+                    <div className="form-group">
+                      <label className="form-label">Property Type</label>
+                      <select className="form-select" value={extracted.propertyType || 'Other'} onChange={(e) => updateLead(index, 'propertyType', e.target.value)}>
+                        {['1BHK','2BHK','3BHK','4BHK','Villa','Plot','Commercial','Other'].map((p) => <option key={p}>{p}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Source</label>
+                      <select className="form-select" value={extracted.source || 'Direct'} onChange={(e) => updateLead(index, 'source', e.target.value)}>
+                        {['Direct','Facebook','99acres','MagicBricks','Housing','Referral','Instagram','Other'].map((s) => <option key={s}>{s}</option>)}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               ))}
-
-              <div className="form-group">
-                <label className="form-label">Property Type</label>
-                <select className="form-select" value={extracted.propertyType || 'Other'} onChange={(e) => update('propertyType', e.target.value)} id="ext-property">
-                  {['1BHK','2BHK','3BHK','4BHK','Villa','Plot','Commercial','Other'].map((p) => <option key={p}>{p}</option>)}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Source</label>
-                <select className="form-select" value={extracted.source || 'Direct'} onChange={(e) => update('source', e.target.value)} id="ext-source">
-                  {['Direct','Facebook','99acres','MagicBricks','Housing','Referral','Instagram','Other'].map((s) => <option key={s}>{s}</option>)}
-                </select>
-              </div>
             </div>
 
-            <button className="btn btn-primary btn-full btn-lg mt-4" onClick={handleSaveLead} disabled={saving} id="save-extracted-btn">
-              {saving ? <span className="spinner" /> : <><UserPlus size={18} /> Save as Lead</>}
+            <button className="btn btn-primary btn-full btn-lg mt-2" onClick={handleSaveLeads} disabled={saving}>
+              {saving ? <span className="spinner" /> : <><UserPlus size={18} /> Save All Leads ({extractedLeads.length})</>}
             </button>
           </motion.div>
         )}
 
-        {!extracted && !loading && (
+        {extractedLeads.length === 0 && !loading && (
           <motion.div className="glass-card-elevated p-6 extract-how" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
             <h3 className="mb-4">How it works</h3>
             <div className="how-steps">

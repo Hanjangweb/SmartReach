@@ -57,6 +57,12 @@
   display: flex;
   border-bottom: 1px solid var(--border);
   padding: 0 4px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.detail-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .detail-tab {

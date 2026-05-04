@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, TrendingUp, DollarSign, Zap, Crown, User, ShieldCheck, Mail, Calendar, Edit2, Filter } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, Zap, Crown, User, ShieldCheck, Mail, Calendar, Edit2, Filter, Save } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../lib/api';
 import './AdminDashboard.css';
@@ -11,25 +11,62 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [plans, setPlans] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
-  const [activeTab, setActiveTab] = useState('users'); // 'users' or 'plans'
+  const [activeTab, setActiveTab] = useState('users'); // 'users', 'plans', 'leaderboard', 'support'
+  const [supportConversations, setSupportConversations] = useState([]);
+  const [selectedSupportUserId, setSelectedSupportUserId] = useState(null);
+  const [supportMessages, setSupportMessages] = useState([]);
+  const [replyText, setReplyText] = useState('');
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'support') fetchSupportConversations();
+  }, [activeTab]);
+
+  const fetchSupportConversations = async () => {
+    try {
+      const res = await api.get('/support/admin/conversations');
+      setSupportConversations(res.data.conversations || []);
+    } catch { toast.error('Failed to load support inbox'); }
+  };
+
+  const selectConversation = async (userId) => {
+    setSelectedSupportUserId(userId);
+    try {
+      const res = await api.get(`/support/admin/messages/${userId}`);
+      setSupportMessages(res.data.messages || []);
+      setSupportConversations(prev => prev.map(c => c._id === userId ? { ...c, unreadCount: 0 } : c));
+    } catch { toast.error('Failed to load messages'); }
+  };
+
+  const sendSupportReply = async (e) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+    try {
+      const res = await api.post(`/support/admin/messages/${selectedSupportUserId}`, { content: replyText });
+      setSupportMessages(prev => [...prev, res.data.message]);
+      setReplyText('');
+    } catch { toast.error('Failed to send reply'); }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [sRes, uRes, pRes] = await Promise.all([
+      const [sRes, uRes, pRes, lRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/users'),
         api.get('/plans'),
+        api.get('/admin/leaderboard')
       ]);
       setStats(sRes.data.stats);
       setUsers(uRes.data.users);
       setPlans(pRes.data.plans || []);
+      setLeaderboard(lRes.data.leaderboard || []);
     } catch { toast.error('Failed to load admin data'); }
     setLoading(false);
   };
@@ -69,18 +106,30 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="flex gap-4 mb-6 border-b border-border">
+      <div className="flex gap-2 mb-6 border-b border-border pb-2">
         <button 
-          className={`pb-2 px-1 border-b-2 font-semibold ${activeTab === 'users' ? 'border-primary text-primary' : 'border-transparent text-muted'}`}
+          className={`btn btn-sm ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('users')}
         >
           Users & Stats
         </button>
         <button 
-          className={`pb-2 px-1 border-b-2 font-semibold ${activeTab === 'plans' ? 'border-primary text-primary' : 'border-transparent text-muted'}`}
+          className={`btn btn-sm ${activeTab === 'leaderboard' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setActiveTab('leaderboard')}
+        >
+          Team Leaderboard
+        </button>
+        <button 
+          className={`btn btn-sm ${activeTab === 'plans' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('plans')}
         >
           Manage Plans
+        </button>
+        <button 
+          className={`btn btn-sm ${activeTab === 'support' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setActiveTab('support')}
+        >
+          Support Inbox
         </button>
       </div>
 
@@ -187,6 +236,114 @@ export default function AdminDashboard() {
         </div>
       </div>
       </>
+      ) : activeTab === 'leaderboard' ? (
+        <div className="glass-card p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Crown size={20} className="text-amber" />
+            <h3>Agent Performance Leaderboard</h3>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Agent</th>
+                  <th>Total Leads</th>
+                  <th>Closed Deals</th>
+                  <th>Conversion Rate</th>
+                  <th>Active Pipeline</th>
+                  <th>Closed Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map((lb, index) => (
+                  <tr key={lb._id}>
+                    <td>
+                      <div className="font-bold text-lg" style={{ color: index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : index === 2 ? '#b45309' : 'var(--text-muted)' }}>
+                        #{index + 1}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="font-semibold text-primary">{lb.agentName}</div>
+                      <div className="text-xs text-muted">{lb.agentEmail}</div>
+                    </td>
+                    <td className="font-medium">{lb.totalLeads}</td>
+                    <td className="font-bold text-emerald">{lb.closedDeals}</td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{lb.conversionRate}%</span>
+                        <div className="score-bar-track" style={{ width: 60, height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                          <div className="score-bar-fill" style={{ width: `${Math.min(lb.conversionRate, 100)}%`, height: '100%', background: '#10b981' }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="font-medium">₹{lb.activePipelineValue}L</td>
+                    <td className="font-bold text-emerald">₹{lb.totalClosedValue}L</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {leaderboard.length === 0 && <div className="p-8 text-center text-muted">No agent performance data yet</div>}
+          </div>
+        </div>
+      ) : activeTab === 'support' ? (
+        <div className="glass-card flex h-[600px] overflow-hidden" style={{ minHeight: 600 }}>
+          {/* Sidebar */}
+          <div className="w-1/3 border-r border-border overflow-y-auto">
+            <div className="p-4 border-b border-border font-semibold flex items-center justify-between">
+              <span>Conversations</span>
+              <span className="badge bg-primary text-white">{supportConversations.length}</span>
+            </div>
+            {supportConversations.length === 0 ? (
+              <div className="p-8 text-center text-muted text-sm">No support tickets found</div>
+            ) : (
+              supportConversations.map(conv => (
+                <div 
+                  key={conv._id} 
+                  className={`p-4 border-b border-border cursor-pointer transition-colors ${selectedSupportUserId === conv._id ? 'bg-indigo-500/10 border-l-4 border-l-indigo-500' : 'hover:bg-white/5 border-l-4 border-l-transparent'}`}
+                  onClick={() => selectConversation(conv._id)}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-semibold">{conv.userInfo.name}</span>
+                    {conv.unreadCount > 0 && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{conv.unreadCount} new</span>}
+                  </div>
+                  <div className="text-xs text-muted mb-2">{conv.userInfo.email} • {conv.userInfo.plan.toUpperCase()}</div>
+                  <div className="text-sm truncate opacity-80">{conv.latestMessage?.content}</div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          {/* Chat Area */}
+          <div className="w-2/3 flex flex-col">
+            {!selectedSupportUserId ? (
+              <div className="flex-1 flex items-center justify-center text-muted">Select a conversation to view and reply</div>
+            ) : (
+              <>
+                <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+                  {supportMessages.map(msg => (
+                    <div key={msg._id} className={`max-w-[80%] p-3 rounded-lg ${msg.isFromAdmin ? 'bg-primary text-white self-end rounded-br-none' : 'bg-white/10 text-white self-start rounded-bl-none'}`}>
+                      {msg.content}
+                      <span className="text-[0.65rem] opacity-70 block mt-1 text-right">
+                        {new Date(msg.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <form className="p-4 border-t border-border flex gap-2 bg-black/20" onSubmit={sendSupportReply}>
+                  <input 
+                    type="text" 
+                    className="form-input flex-1" 
+                    placeholder="Type your reply to the user..." 
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                  />
+                  <button type="submit" className="btn btn-primary" disabled={!replyText.trim()}>Reply</button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
       ) : (
         <div className="plans-manage-grid grid grid-3 gap-6">
           {plans.map(plan => (

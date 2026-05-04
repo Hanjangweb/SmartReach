@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import SupportChatWidget from '../SupportChatWidget';
 
 export default function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -22,6 +23,7 @@ export default function AppLayout() {
         </main>
       </div>
       {mobileOpen && <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />}
+      <SupportChatWidget />
     </div>
   );
 }

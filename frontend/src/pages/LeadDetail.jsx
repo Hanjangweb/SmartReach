@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Phone, MapPin, Edit3, MessageSquare, Bot, Copy,
-  Bell, Star, Calendar, Send, ExternalLink, Zap
+  Bell, Star, Calendar, Send, ExternalLink, Zap, Home
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
@@ -23,9 +23,16 @@ export default function LeadDetail() {
   const [noteText, setNoteText] = useState('');
   const [aiReply, setAiReply] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [insight, setInsight] = useState('');
+  const [insightLoading, setInsightLoading] = useState(false);
   const [scoreLoading, setScoreLoading] = useState(false);
   const [addingNote, setAddingNote] = useState(false);
-  const [tab, setTab] = useState('notes'); // notes | ai | reminder
+  const [tab, setTab] = useState('notes'); // notes | ai | insight | reminder | properties
+  const [agents, setAgents] = useState([]);
+  const [properties, setProperties] = useState([]);
+  const [loadingProps, setLoadingProps] = useState(false);
+  const [showDealModal, setShowDealModal] = useState(false);
+  const [dealForm, setDealForm] = useState({ saleValue: '', commissionRate: 2, agentSplit: 50 });
 
   // Reminder state
   const [reminder, setReminder] = useState({ message: '', scheduledAt: '', type: 'call' });
@@ -34,11 +41,81 @@ export default function LeadDetail() {
   useEffect(() => {
     fetchLead(id);
     api.get(`/leads/${id}/notes`).then((r) => setNotes(r.data.notes || [])).catch(() => {});
-  }, [id]);
+    if (user?.role === 'admin') {
+      api.get('/admin/users').then((r) => setAgents(r.data.users || [])).catch(() => {});
+    }
+  }, [id, user]);
+
+  useEffect(() => {
+    if (tab === 'properties' && properties.length === 0) {
+      setLoadingProps(true);
+      api.get('/properties').then(r => setProperties(r.data.properties || [])).finally(() => setLoadingProps(false));
+    }
+  }, [tab]);
+
+  const suggestProperty = async (prop) => {
+    const message = `Hi ${lead?.name},\nI thought you might be interested in this property based on your requirements:\n\n*${prop.title}*\nLocation: ${prop.location}\nPrice: ₹${prop.price} Lakhs\nType: ${prop.type}\n\nLet me know if you'd like to schedule a site visit!`;
+    
+    try {
+      await api.post(`/leads/${id}/notes`, {
+        content: `Suggested property: ${prop.title} (₹${prop.price}L)`,
+        type: 'manual'
+      });
+      fetchLead(id);
+      api.get(`/leads/${id}/notes`).then((r) => setNotes(r.data.notes || [])).catch(() => {});
+      toast.success('Property suggested and recorded!');
+      
+      const url = `https://wa.me/${lead?.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    } catch {
+      toast.error('Failed to record suggestion');
+    }
+  };
 
   const handleStatusChange = async (status) => {
+    if (status === 'Closed') {
+      setShowDealModal(true);
+      return;
+    }
     const r = await updateLeadStatus(id, status);
     if (r.success) toast.success(`Status → ${status}`);
+  };
+
+  const submitDeal = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/deals', {
+        lead: id,
+        saleValue: Number(dealForm.saleValue),
+        commissionRate: Number(dealForm.commissionRate),
+        agentSplit: Number(dealForm.agentSplit)
+      });
+      
+      const r = await updateLeadStatus(id, 'Closed');
+      if (r.success) toast.success('Deal closed and commission logged! 🎉');
+      
+      await api.post(`/leads/${id}/notes`, {
+        content: `[System] Deal closed! Sale Value: ₹${dealForm.saleValue}L, Commission: ${dealForm.commissionRate}%, Agent Split: ${dealForm.agentSplit}%`,
+        type: 'system'
+      });
+      
+      fetchLead(id);
+      api.get(`/leads/${id}/notes`).then((r) => setNotes(r.data.notes || [])).catch(() => {});
+      setShowDealModal(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to close deal');
+    }
+  };
+
+  const handleAssign = async (agentId) => {
+    try {
+      await api.put(`/leads/${id}/assign`, { agentId });
+      toast.success('Lead reassigned');
+      fetchLead(id);
+      api.get(`/leads/${id}/notes`).then((r) => setNotes(r.data.notes || [])).catch(() => {});
+    } catch {
+      toast.error('Failed to reassign lead');
+    }
   };
 
   const addNote = async () => {
@@ -71,6 +148,24 @@ export default function LeadDetail() {
     setAiLoading(false);
   };
 
+  const generateInsight = async () => {
+    if (user?.plan === 'free') {
+      toast.error('AI Insights are only available on the Pro plan!', { icon: '👑' });
+      setTab('insight');
+      return;
+    }
+    setInsightLoading(true);
+    setTab('insight');
+    try {
+      const r = await api.post('/ai/insight', { leadId: id });
+      setInsight(r.data.insight);
+      toast.success('AI insight generated!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'AI service unavailable');
+    }
+    setInsightLoading(false);
+  };
+
   const scoreLead = async () => {
     if (user?.plan === 'free') {
       toast.error('Lead Scoring is a Pro feature!', { icon: '🔥' });
@@ -94,7 +189,7 @@ export default function LeadDetail() {
     if (!reminder.message.trim() || !reminder.scheduledAt) { toast.error('Fill reminder details'); return; }
     setSavingReminder(true);
     try {
-      await api.post('/reminders', { ...reminder, lead: id });
+      await api.post('/reminders', { ...reminder, leadId: id });
       toast.success('Reminder set!');
       setReminder({ message: '', scheduledAt: '', type: 'call' });
     } catch { toast.error('Failed to set reminder'); }
@@ -143,8 +238,25 @@ export default function LeadDetail() {
           <motion.div className="glass-card p-6" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
             <h3 className="mb-4">Lead Information</h3>
             <div className="lead-info-grid">
-              {user?.role === 'admin' && lead.agent && (
-                <InfoRow icon={<span>👤</span>} label="Agent" value={lead.agent.name || 'Unknown'} />
+              {user?.role === 'admin' ? (
+                <div className="info-row" style={{ alignItems: 'center' }}>
+                  <span className="info-icon">👤</span>
+                  <div className="w-full">
+                    <span className="info-label">Assigned Agent</span>
+                    <select 
+                      className="form-select form-select-sm mt-1" 
+                      value={lead.agent?._id || ''} 
+                      onChange={(e) => handleAssign(e.target.value)}
+                    >
+                      <option value="" disabled>Select Agent</option>
+                      {agents.map(a => (
+                        <option key={a._id} value={a._id}>{a.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                lead.agent && <InfoRow icon={<span>👤</span>} label="Agent" value={lead.agent.name || 'Unknown'} />
               )}
               <InfoRow icon={<Phone size={15} />} label="Phone" value={lead.phone} />
               {lead.email && <InfoRow icon={<span>✉️</span>} label="Email" value={lead.email} />}
@@ -201,6 +313,12 @@ export default function LeadDetail() {
             </button>
             <button className={`detail-tab ${tab === 'ai' ? 'active' : ''}`} onClick={() => setTab('ai')} id="tab-ai">
               <Bot size={16} /> AI Reply
+            </button>
+            <button className={`detail-tab ${tab === 'insight' ? 'active' : ''}`} onClick={() => setTab('insight')} id="tab-insight">
+              <Zap size={16} /> Insight
+            </button>
+            <button className={`detail-tab ${tab === 'properties' ? 'active' : ''}`} onClick={() => setTab('properties')} id="tab-properties">
+              <Home size={16} /> Recommend
             </button>
             <button className={`detail-tab ${tab === 'reminder' ? 'active' : ''}`} onClick={() => setTab('reminder')} id="tab-reminder">
               <Bell size={16} /> Reminder
@@ -285,6 +403,54 @@ export default function LeadDetail() {
               </div>
             )}
 
+            {/* Insight Tab */}
+            {tab === 'insight' && (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-indigo font-semibold flex items-center gap-2"><Zap size={16}/> Strategic Insight</h4>
+                  <button className="btn btn-primary btn-sm" onClick={generateInsight} disabled={insightLoading}>
+                    {insightLoading ? <span className="spinner" /> : <><Bot size={14} /> Generate Insight</>}
+                  </button>
+                </div>
+                {insight ? (
+                  <div className="ai-reply-card">
+                    <p className="ai-reply-text">{insight}</p>
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <span className="empty-state-icon">💡</span>
+                    <p>Get AI-powered recommendations for the next best action with this lead.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Properties Tab */}
+            {tab === 'properties' && (
+              <div className="flex flex-col gap-4">
+                <h4 className="text-primary font-semibold flex items-center gap-2"><Home size={16}/> Recommend Properties</h4>
+                {loadingProps ? (
+                  <div className="p-4 text-center text-muted">Loading catalog...</div>
+                ) : properties.length === 0 ? (
+                  <div className="empty-state p-4">No properties available in catalog.</div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {properties.map(prop => (
+                      <div key={prop._id} className="glass-card p-3 flex justify-between items-center" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                        <div>
+                          <div className="font-semibold text-sm">{prop.title}</div>
+                          <div className="text-xs text-muted">{prop.location} • ₹{prop.price}L • {prop.type}</div>
+                        </div>
+                        <button className="btn btn-primary btn-sm px-3 py-1 text-xs" onClick={() => suggestProperty(prop)}>
+                          <MessageSquare size={12} /> Suggest
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Reminder Tab */}
             {tab === 'reminder' && (
               <div className="flex flex-col gap-4">
@@ -312,6 +478,37 @@ export default function LeadDetail() {
           </div>
         </motion.div>
       </div>
+
+      {/* Deal Modal */}
+      {showDealModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm">
+          <motion.div className="glass-card p-6 max-w-md w-full m-4" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+            <h3 className="mb-2 text-emerald">🎉 Close Deal</h3>
+            <p className="text-sm text-muted mb-6">Enter the financial details to track commission and agency revenue.</p>
+            
+            <form onSubmit={submitDeal} className="flex flex-col gap-4">
+              <div className="form-group">
+                <label className="form-label">Final Sale Value (in Lakhs) *</label>
+                <input required type="number" step="0.1" className="form-input" placeholder="e.g. 75.5" value={dealForm.saleValue} onChange={e => setDealForm({...dealForm, saleValue: e.target.value})} />
+              </div>
+              <div className="flex gap-4">
+                <div className="form-group flex-1">
+                  <label className="form-label">Agency Comm. % *</label>
+                  <input required type="number" step="0.1" className="form-input" value={dealForm.commissionRate} onChange={e => setDealForm({...dealForm, commissionRate: e.target.value})} />
+                </div>
+                <div className="form-group flex-1">
+                  <label className="form-label">Agent Split % *</label>
+                  <input required type="number" step="1" className="form-input" value={dealForm.agentSplit} onChange={e => setDealForm({...dealForm, agentSplit: e.target.value})} />
+                </div>
+              </div>
+              <div className="flex gap-3 mt-4">
+                <button type="button" className="btn btn-secondary flex-1" onClick={() => setShowDealModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary flex-1" style={{ background: '#10b981', borderColor: '#10b981' }}>Confirm Deal</button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

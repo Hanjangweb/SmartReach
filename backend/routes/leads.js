@@ -175,4 +175,44 @@ router.put('/:id/status', protect, async (req, res, next) => {
   }
 });
 
+// @route PUT /api/leads/:id/assign
+// Admin only: Reassign a lead to a different agent
+router.put('/:id/assign', protect, async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized to reassign leads' });
+    }
+
+    const { agentId } = req.body;
+    if (!agentId) {
+      return res.status(400).json({ success: false, message: 'agentId is required' });
+    }
+
+    const lead = await Lead.findById(req.params.id).populate('agent', 'name');
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+
+    const oldAgentName = lead.agent ? lead.agent.name : 'Unassigned';
+    
+    // Find new agent
+    const User = require('../models/User');
+    const newAgent = await User.findById(agentId);
+    if (!newAgent) return res.status(404).json({ success: false, message: 'New agent not found' });
+
+    lead.agent = agentId;
+    await lead.save();
+
+    // Create system note for audit log
+    await Note.create({
+      lead: lead._id,
+      agent: req.user._id,
+      content: `[System] Lead reassigned from ${oldAgentName} to ${newAgent.name} by Admin`,
+      type: 'system',
+    });
+
+    res.json({ success: true, lead });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Building2, Phone, Save, Crown, Zap } from 'lucide-react';
+import { User, Building2, Phone, Save, Crown, Zap, Key, Copy } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { PayPalButtons } from '@paypal/react-paypal-js';
 import useAuthStore from '../store/authStore';
@@ -23,6 +23,8 @@ export default function Settings() {
   const [showModal, setShowModal] = useState(false);
   const [planToUpgrade, setPlanToUpgrade] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [apiKey, setApiKey] = useState(user?.apiKey || '');
+  const [generatingKey, setGeneratingKey] = useState(false);
 
   const verifyRef = useRef(false);
   
@@ -107,6 +109,24 @@ export default function Settings() {
     r.success ? toast.success('Profile updated!') : toast.error('Update failed');
   };
 
+  const handleGenerateApiKey = async () => {
+    setGeneratingKey(true);
+    try {
+      const res = await api.post('/auth/api-key');
+      setApiKey(res.data.apiKey);
+      toast.success('API Key generated successfully');
+      fetchUser();
+    } catch {
+      toast.error('Failed to generate API Key');
+    }
+    setGeneratingKey(false);
+  };
+
+  const copyApiKey = () => {
+    navigator.clipboard.writeText(apiKey);
+    toast.success('API Key copied to clipboard!');
+  };
+
 
   return (
     <div>
@@ -181,6 +201,44 @@ export default function Settings() {
                 </div>
               ))}
             </div>
+          </motion.div>
+        )}
+
+        {/* Developer API (Advanced Plan or Admin Only) */}
+        {(user?.plan === 'advanced' || user?.role === 'admin') && (
+          <motion.div className="glass-card-elevated p-6 mt-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="flex items-center gap-3 mb-4">
+              <Key size={20} className="text-emerald" />
+              <h3>Developer API</h3>
+            </div>
+            <p className="text-sm text-secondary mb-4">
+              Use your API key to programmatically push leads from Zapier, Facebook Lead Ads, or your own custom integration.
+            </p>
+            <div className="flex gap-2 items-center">
+              <input 
+                className="form-input flex-1 font-mono text-sm" 
+                readOnly 
+                value={apiKey ? '************************' : 'No API Key generated yet'} 
+                type={apiKey ? 'password' : 'text'}
+              />
+              {apiKey && (
+                <button className="btn btn-secondary btn-icon" onClick={copyApiKey} title="Copy API Key">
+                  <Copy size={16} />
+                </button>
+              )}
+              <button 
+                className="btn btn-primary" 
+                onClick={handleGenerateApiKey} 
+                disabled={generatingKey}
+              >
+                {generatingKey ? <span className="spinner" /> : apiKey ? 'Regenerate Key' : 'Generate Key'}
+              </button>
+            </div>
+            {apiKey && (
+              <p className="text-xs text-red-400 mt-2">
+                Keep this key secret. If you regenerate it, your old key will immediately stop working.
+              </p>
+            )}
           </motion.div>
         )}
       </div>

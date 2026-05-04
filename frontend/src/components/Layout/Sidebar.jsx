@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, PlusCircle, Bell, Bot, Settings,
   ChevronLeft, ChevronRight, Zap, LogOut, ShieldAlert, CreditCard,
-  TrendingUp, MessageSquare, Target
+  TrendingUp, MessageSquare, Target, Home, DollarSign
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import './Sidebar.css';
@@ -12,6 +12,8 @@ const NAV_ITEMS = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/leads', icon: Users, label: 'Leads' },
   { to: '/reminders-manager', icon: Target, label: 'Smart Reminders', premium: true },
+  { to: '/properties', icon: Home, label: 'Properties' },
+  { to: '/deals', icon: DollarSign, label: 'Deals & Commission', premium: true },
   { to: '/analytics', icon: TrendingUp, label: 'Analytics', premium: true },
   { to: '/templates', icon: MessageSquare, label: 'Templates', premium: true },
   { to: '/ai/extract', icon: Bot, label: 'AI Extract' },
@@ -65,7 +67,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
 
       {/* Navigation */}
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter(item => !(user?.role === 'admin' && item.to === '/pricing')).map((item) => {
           const isPremium = item.premium && (!user?.plan || user.plan === 'free');
           
           if (isPremium) {
@@ -149,7 +151,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                 transition={{ duration: 0.15 }}
               >
                 <span className="sidebar-user-name">{user?.name}</span>
-                <span className="sidebar-user-plan">{user?.plan || 'Free'} plan</span>
+                <span className="sidebar-user-plan">{user?.role === 'admin' ? 'Admin' : `${user?.plan || 'Free'} plan`}</span>
               </motion.div>
             )}
           </AnimatePresence>

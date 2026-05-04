@@ -60,4 +60,58 @@ router.post('/users/:id/plan', async (req, res, next) => {
   }
 });
 
+// @route GET /api/admin/leaderboard
+// Get agent performance leaderboard
+router.get('/leaderboard', async (req, res, next) => {
+  try {
+    const leaderboard = await Lead.aggregate([
+      { $match: { isArchived: false } },
+      {
+        $group: {
+          _id: '$agent',
+          totalLeads: { $sum: 1 },
+          closedDeals: { $sum: { $cond: [{ $eq: ['$status', 'Closed'] }, 1, 0] } },
+          activePipelineValue: { 
+            $sum: { $cond: [{ $in: ['$status', ['New', 'Contacted', 'SiteVisit', 'Negotiation']] }, '$budget', 0] } 
+          },
+          totalClosedValue: { 
+            $sum: { $cond: [{ $eq: ['$status', 'Closed'] }, '$budget', 0] } 
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'agentInfo'
+        }
+      },
+      { $unwind: { path: '$agentInfo', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          agentName: { $ifNull: ['$agentInfo.name', 'Unassigned'] },
+          agentEmail: { $ifNull: ['$agentInfo.email', ''] },
+          totalLeads: 1,
+          closedDeals: 1,
+          activePipelineValue: { $round: ['$activePipelineValue', 2] },
+          totalClosedValue: { $round: ['$totalClosedValue', 2] },
+          conversionRate: {
+            $round: [
+              { $multiply: [{ $divide: ['$closedDeals', { $max: ['$totalLeads', 1] }] }, 100] },
+              1
+            ]
+          }
+        }
+      },
+      { $sort: { closedDeals: -1, conversionRate: -1 } }
+    ]);
+
+    res.json({ success: true, leaderboard });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
