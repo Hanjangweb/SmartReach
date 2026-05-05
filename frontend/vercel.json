@@ -1,5 +1,10 @@
 {
+  "version": 2,
   "rewrites": [
+    {
+      "source": "/ai/(.*)",
+      "destination": "api/main.py"
+    },
     {
       "source": "/(.*)",
       "destination": "/"

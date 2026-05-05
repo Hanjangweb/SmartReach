@@ -8,6 +8,16 @@ const router = express.Router();
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
+const handleAIError = (err, res, next) => {
+  if (err.code === 'ECONNREFUSED' || err.code === 'ECONNABORTED' || err.code === 'ECONNRESET' || (err.response && err.response.status >= 500)) {
+    return res.status(503).json({ 
+      success: false, 
+      message: 'AI Service is warming up (Free Tier). Please wait 45-60 seconds and try again!' 
+    });
+  }
+  next(err);
+};
+
 // Middleware to check if user has a Pro plan for AI features
 const checkPlan = (req, res, next) => {
   if (req.user.plan === 'free') {
@@ -45,7 +55,7 @@ router.post('/reply', protect, checkPlan, async (req, res, next) => {
       customPrompt: customPrompt || '',
     };
 
-    const response = await axios.post(`${AI_SERVICE_URL}/ai/reply`, payload, { timeout: 30000 });
+    const response = await axios.post(`${AI_SERVICE_URL}/ai/reply`, payload, { timeout: 100000 });
 
     // Save the AI reply as a note
     await Note.create({
@@ -71,10 +81,7 @@ router.post('/reply', protect, checkPlan, async (req, res, next) => {
 
     res.json({ success: true, reply: response.data.reply });
   } catch (err) {
-    if (err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET') {
-      return res.status(503).json({ success: false, message: 'AI service unavailable. Please try again later.' });
-    }
-    next(err);
+    handleAIError(err, res, next);
   }
 });
 
@@ -85,14 +92,11 @@ router.post('/extract', protect, async (req, res, next) => {
     const { text } = req.body;
     if (!text) return res.status(400).json({ success: false, message: 'Text is required' });
 
-    const response = await axios.post(`${AI_SERVICE_URL}/ai/extract`, { text }, { timeout: 30000 });
+    const response = await axios.post(`${AI_SERVICE_URL}/ai/extract`, { text }, { timeout: 100000 });
 
     res.json({ success: true, extracted: response.data.extracted });
   } catch (err) {
-    if (err.code === 'ECONNREFUSED') {
-      return res.status(503).json({ success: false, message: 'AI service unavailable' });
-    }
-    next(err);
+    handleAIError(err, res, next);
   }
 });
 
@@ -121,7 +125,7 @@ router.post('/score', protect, checkPlan, async (req, res, next) => {
       },
     };
 
-    const response = await axios.post(`${AI_SERVICE_URL}/ai/score`, payload, { timeout: 30000 });
+    const response = await axios.post(`${AI_SERVICE_URL}/ai/score`, payload, { timeout: 100000 });
 
     // Update lead score
     lead.leadScore = response.data.score;
@@ -130,10 +134,7 @@ router.post('/score', protect, checkPlan, async (req, res, next) => {
 
     res.json({ success: true, score: response.data.score, percentage: response.data.percentage, reason: response.data.reason });
   } catch (err) {
-    if (err.code === 'ECONNREFUSED') {
-      return res.status(503).json({ success: false, message: 'AI service unavailable' });
-    }
-    next(err);
+    handleAIError(err, res, next);
   }
 });
 
@@ -160,13 +161,10 @@ router.post('/suggest-followup', protect, checkPlan, async (req, res, next) => {
       agentName: req.user.name,
     };
 
-    const response = await axios.post(`${AI_SERVICE_URL}/ai/suggest-followup`, payload, { timeout: 30000 });
+    const response = await axios.post(`${AI_SERVICE_URL}/ai/suggest-followup`, payload, { timeout: 100000 });
     res.json({ success: true, suggestion: response.data.suggestion });
   } catch (err) {
-    if (err.code === 'ECONNREFUSED') {
-      return res.status(503).json({ success: false, message: 'AI service unavailable' });
-    }
-    next(err);
+    handleAIError(err, res, next);
   }
 });
 
@@ -182,13 +180,10 @@ router.post('/generate-template', protect, checkPlan, async (req, res, next) => 
       agentName: req.user.name,
     };
 
-    const response = await axios.post(`${AI_SERVICE_URL}/ai/generate-template`, payload, { timeout: 30000 });
+    const response = await axios.post(`${AI_SERVICE_URL}/ai/generate-template`, payload, { timeout: 100000 });
     res.json({ success: true, content: response.data.content });
   } catch (err) {
-    if (err.code === 'ECONNREFUSED') {
-      return res.status(503).json({ success: false, message: 'AI service unavailable' });
-    }
-    next(err);
+    handleAIError(err, res, next);
   }
 });
 
@@ -223,13 +218,10 @@ router.post('/insight', protect, checkPlan, async (req, res, next) => {
       }
     };
 
-    const response = await axios.post(`${AI_SERVICE_URL}/ai/insight`, payload, { timeout: 30000 });
+    const response = await axios.post(`${AI_SERVICE_URL}/ai/insight`, payload, { timeout: 100000 });
     res.json({ success: true, insight: response.data.insight });
   } catch (err) {
-    if (err.code === 'ECONNREFUSED') {
-      return res.status(503).json({ success: false, message: 'AI service unavailable' });
-    }
-    next(err);
+    handleAIError(err, res, next);
   }
 });
 
