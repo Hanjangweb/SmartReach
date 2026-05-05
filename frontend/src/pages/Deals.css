@@ -99,3 +99,9 @@
   .deal-stat-value { font-size: 1.5rem; }
   .deals-table th, .deals-table td { padding: 0.75rem 1rem; font-size: 0.85rem; }
 }
+
+@media (max-width: 640px) {
+  .deals-stats-grid { grid-template-columns: 1fr; }
+  .deals-table th, .deals-table td { padding: 0.5rem; font-size: 0.75rem; }
+  .deals-table { min-width: 800px; }
+}

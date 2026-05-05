@@ -36,17 +36,25 @@ router.post('/create-checkout-session', protect, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Invalid plan' });
     }
 
-    const session = await stripe.checkout.sessions.create({
+    // In development or if Stripe key is not configured, return a mock response
+    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_mock_key') {
+      return res.json({
+        success: true,
+        sessionId: 'mock_session',
+        url: `${process.env.FRONTEND_URL}/settings?session_id=mock_session&plan_id=${planId}`
+      });
+    }
 
+    const session = await stripe.checkout.sessions.create({
       line_items: [
         {
           price_data: {
             currency: 'inr',
             product_data: {
               name: plan.name,
-              description: plan.description,
+              description: plan.description || plan.name,
             },
-            unit_amount: plan.price * 100, // Amount in paise
+            unit_amount: plan.price * 100,
           },
           quantity: 1,
         },
@@ -61,16 +69,11 @@ router.post('/create-checkout-session', protect, async (req, res, next) => {
       },
     });
 
-    } catch (err) {
-      if (process.env.NODE_ENV === 'development') {
-        return res.json({ 
-          success: true, 
-          sessionId: 'mock_session', 
-          url: `${process.env.FRONTEND_URL}/settings?session_id=mock_session&plan_id=${req.body.planId}`
-        });
-      }
-      next(err);
-    }
+    res.json({ success: true, sessionId: session.id, url: session.url });
+  } catch (err) {
+    console.error('STRIPE CHECKOUT ERROR:', err.message);
+    res.status(500).json({ success: false, message: err.message || 'Payment session creation failed' });
+  }
 });
 
 

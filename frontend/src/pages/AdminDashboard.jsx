@@ -97,37 +97,41 @@ export default function AdminDashboard() {
   return (
     <div className="admin-container">
       <div className="page-header">
-        <div>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="text-indigo" size={24} />
-            <h1>Platform Administration</h1>
+        <div className="w-full">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldCheck className="text-indigo flex-shrink-0" size={24} />
+            <h1 className="page-title">Platform Administration</h1>
           </div>
-          <p className="text-secondary text-sm mt-2">Manage users and track platform growth</p>
+          <p className="page-subtitle text-secondary">Manage users and track platform growth</p>
         </div>
       </div>
 
-      <div className="flex gap-2 mb-6 border-b border-border pb-2">
-        <button 
+      <div className="tab-scroll">
+        <button
           className={`btn btn-sm ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('users')}
+          style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
         >
-          Users & Stats
+          Users &amp; Stats
         </button>
-        <button 
+        <button
           className={`btn btn-sm ${activeTab === 'leaderboard' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('leaderboard')}
+          style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
         >
           Team Leaderboard
         </button>
-        <button 
+        <button
           className={`btn btn-sm ${activeTab === 'plans' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('plans')}
+          style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
         >
           Manage Plans
         </button>
-        <button 
+        <button
           className={`btn btn-sm ${activeTab === 'support' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('support')}
+          style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
         >
           Support Inbox
         </button>
@@ -136,42 +140,42 @@ export default function AdminDashboard() {
       {activeTab === 'users' ? (
         <>
           {/* Stats Cards */}
-      <div className="grid grid-4 mb-8">
-        <div className="glass-card p-6 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted uppercase">Total Users</span>
-            <Users size={16} className="text-indigo" />
+      <div className="grid admin-stats-grid mb-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+        <div className="glass-card p-4 stat-card">
+          <div className="flex items-start justify-between gap-2">
+            <span className="stat-label">Total Users</span>
+            <Users size={14} className="text-indigo flex-shrink-0" />
           </div>
-          <span className="text-2xl font-bold text-primary">{stats?.totalUsers}</span>
+          <span className="stat-value">{stats?.totalUsers}</span>
         </div>
-        <div className="glass-card p-6 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted uppercase">Total Leads</span>
-            <Zap size={16} className="text-amber" />
+        <div className="glass-card p-4 stat-card">
+          <div className="flex items-start justify-between gap-2">
+            <span className="stat-label">Total Leads</span>
+            <Zap size={14} className="text-amber flex-shrink-0" />
           </div>
-          <span className="text-2xl font-bold text-primary">{stats?.totalLeads}</span>
+          <span className="stat-value">{stats?.totalLeads}</span>
         </div>
-        <div className="glass-card p-6 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted uppercase">Pro Users</span>
-            <Crown size={16} className="text-indigo" />
+        <div className="glass-card p-4 stat-card">
+          <div className="flex items-start justify-between gap-2">
+            <span className="stat-label">Pro Users</span>
+            <Crown size={14} className="text-indigo flex-shrink-0" />
           </div>
-          <span className="text-2xl font-bold text-primary">{stats?.proUsers}</span>
+          <span className="stat-value">{stats?.proUsers}</span>
         </div>
-        <div className="glass-card p-6 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted uppercase">Est. Revenue</span>
-            <DollarSign size={16} className="text-emerald" />
+        <div className="glass-card p-4 stat-card">
+          <div className="flex items-start justify-between gap-2">
+            <span className="stat-label">Est. Revenue</span>
+            <DollarSign size={14} className="text-emerald flex-shrink-0" />
           </div>
-          <span className="text-2xl font-bold text-primary">₹{stats?.revenueEstimate}</span>
+          <span className="stat-value">₹{stats?.revenueEstimate}</span>
         </div>
       </div>
 
       {/* User Management */}
       <div className="glass-card p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="flex items-center gap-2"><User size={18} /> User Management</h3>
-          <div className="filter-search" style={{ minWidth: 300 }}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <h3 className="flex items-center gap-2 m-0"><User size={18} /> User Management</h3>
+          <div className="filter-search w-full sm:max-w-md">
             <Filter size={14} className="filter-icon" />
             <input
               className="filter-input"
@@ -197,42 +201,42 @@ export default function AdminDashboard() {
               {filteredUsers.map((user) => (
                 <tr key={user._id}>
                   <td>
-                    <div className="flex items-center gap-3">
-                      <div className="avatar" style={{ width: 32, height: 32, fontSize: '0.75rem' }}>
+                    <div className="flex items-center gap-2">
+                      <div className="avatar" style={{ width: 28, height: 28, fontSize: '0.7rem', minWidth: 28 }}>
                         {user.name[0].toUpperCase()}
                       </div>
-                      <div>
-                        <div className="font-semibold text-primary">{user.name}</div>
-                        <div className="text-xs text-muted flex items-center gap-1"><Mail size={10} /> {user.email}</div>
+                      <div className="min-w-0">
+                        <div className="user-name">{user.name}</div>
+                        <div className="user-email"><Mail size={10} /> {user.email}</div>
                       </div>
                     </div>
                   </td>
                   <td>
-                    <span className="badge" style={{ background: `${PLAN_COLORS[user.plan]}20`, color: PLAN_COLORS[user.plan], borderColor: `${PLAN_COLORS[user.plan]}40` }}>
+                    <span className="badge text-xs" style={{ background: `${PLAN_COLORS[user.plan]}20`, color: PLAN_COLORS[user.plan], borderColor: `${PLAN_COLORS[user.plan]}40` }}>
                       {user.plan.toUpperCase()}
                     </span>
                   </td>
-                  <td className="text-sm text-secondary">{user.agency || '—'}</td>
-                  <td className="text-sm text-muted">
+                  <td className="text-xs text-secondary">{user.agency || '—'}</td>
+                  <td className="text-xs text-muted">
                     <div className="flex items-center gap-1"><Calendar size={12} /> {new Date(user.createdAt).toLocaleDateString()}</div>
                   </td>
                   <td>
                     <select
-                      className="form-select form-select-xs"
+                      className="form-select form-select-xs text-xs"
                       value={user.plan}
                       onChange={(e) => updatePlanRole(user._id, e.target.value)}
-                      style={{ width: 110 }}
+                      style={{ width: 'auto', minWidth: 90 }}
                     >
-                      <option value="free">Set Free</option>
-                      <option value="pro">Set Pro</option>
-                      <option value="advanced">Set Advanced</option>
+                      <option value="free">Free</option>
+                      <option value="pro">Pro</option>
+                      <option value="advanced">Advanced</option>
                     </select>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {filteredUsers.length === 0 && <div className="p-8 text-center text-muted">No users found matching your search</div>}
+          {filteredUsers.length === 0 && <div className="p-8 text-center text-muted text-sm">No users found matching your search</div>}
         </div>
       </div>
       </>
@@ -240,7 +244,7 @@ export default function AdminDashboard() {
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-6">
             <Crown size={20} className="text-amber" />
-            <h3>Agent Performance Leaderboard</h3>
+            <h3 className="section-title">Agent Performance Leaderboard</h3>
           </div>
           <div className="admin-table-wrap">
             <table className="admin-table">
@@ -248,37 +252,37 @@ export default function AdminDashboard() {
                 <tr>
                   <th>Rank</th>
                   <th>Agent</th>
-                  <th>Total Leads</th>
-                  <th>Closed Deals</th>
-                  <th>Conversion Rate</th>
-                  <th>Active Pipeline</th>
-                  <th>Closed Revenue</th>
+                  <th>Leads</th>
+                  <th>Deals</th>
+                  <th>Rate</th>
+                  <th>Pipeline</th>
+                  <th>Revenue</th>
                 </tr>
               </thead>
               <tbody>
                 {leaderboard.map((lb, index) => (
                   <tr key={lb._id}>
                     <td>
-                      <div className="font-bold text-lg" style={{ color: index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : index === 2 ? '#b45309' : 'var(--text-muted)' }}>
+                      <div className="leader-rank" style={{ color: index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : index === 2 ? '#b45309' : 'var(--text-muted)' }}>
                         #{index + 1}
                       </div>
                     </td>
                     <td>
-                      <div className="font-semibold text-primary">{lb.agentName}</div>
+                      <div className="agent-name">{lb.agentName}</div>
                       <div className="text-xs text-muted">{lb.agentEmail}</div>
                     </td>
-                    <td className="font-medium">{lb.totalLeads}</td>
-                    <td className="font-bold text-emerald">{lb.closedDeals}</td>
-                    <td>
+                    <td className="font-medium text-sm">{lb.totalLeads}</td>
+                    <td className="agent-deals">{lb.closedDeals}</td>
+                    <td className="text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold">{lb.conversionRate}%</span>
-                        <div className="score-bar-track" style={{ width: 60, height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                        <span className="leader-rate">{lb.conversionRate}%</span>
+                        <div className="score-bar-track" style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
                           <div className="score-bar-fill" style={{ width: `${Math.min(lb.conversionRate, 100)}%`, height: '100%', background: '#10b981' }} />
                         </div>
                       </div>
                     </td>
-                    <td className="font-medium">₹{lb.activePipelineValue}L</td>
-                    <td className="font-bold text-emerald">₹{lb.totalClosedValue}L</td>
+                    <td className="agent-pipeline">₹{lb.activePipelineValue}L</td>
+                    <td className="agent-revenue">₹{lb.totalClosedValue}L</td>
                   </tr>
                 ))}
               </tbody>
@@ -287,9 +291,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       ) : activeTab === 'support' ? (
-        <div className="glass-card flex h-[600px] overflow-hidden" style={{ minHeight: 600 }}>
+        <div className="glass-card support-panel" style={{ minHeight: 600 }}>
           {/* Sidebar */}
-          <div className="w-1/3 border-r border-border overflow-y-auto">
+          <div className="support-sidebar">
             <div className="p-4 border-b border-border font-semibold flex items-center justify-between">
               <span>Conversations</span>
               <span className="badge bg-primary text-white">{supportConversations.length}</span>
@@ -300,40 +304,40 @@ export default function AdminDashboard() {
               supportConversations.map(conv => (
                 <div 
                   key={conv._id} 
-                  className={`p-4 border-b border-border cursor-pointer transition-colors ${selectedSupportUserId === conv._id ? 'bg-indigo-500/10 border-l-4 border-l-indigo-500' : 'hover:bg-white/5 border-l-4 border-l-transparent'}`}
+                  className={`support-conversation-item ${selectedSupportUserId === conv._id ? 'selected' : ''}`}
                   onClick={() => selectConversation(conv._id)}
                 >
                   <div className="flex justify-between items-start mb-1">
                     <span className="font-semibold">{conv.userInfo.name}</span>
-                    {conv.unreadCount > 0 && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{conv.unreadCount} new</span>}
+                    {conv.unreadCount > 0 && <span className="unread-badge">{conv.unreadCount} new</span>}
                   </div>
                   <div className="text-xs text-muted mb-2">{conv.userInfo.email} • {conv.userInfo.plan.toUpperCase()}</div>
-                  <div className="text-sm truncate opacity-80">{conv.latestMessage?.content}</div>
+                  <div className="message-preview">{conv.latestMessage?.content}</div>
                 </div>
               ))
             )}
           </div>
           
           {/* Chat Area */}
-          <div className="w-2/3 flex flex-col">
+          <div className="support-chat-area">
             {!selectedSupportUserId ? (
               <div className="flex-1 flex items-center justify-center text-muted">Select a conversation to view and reply</div>
             ) : (
               <>
-                <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+                <div className="support-messages-panel">
                   {supportMessages.map(msg => (
-                    <div key={msg._id} className={`max-w-[80%] p-3 rounded-lg ${msg.isFromAdmin ? 'bg-primary text-white self-end rounded-br-none' : 'bg-white/10 text-white self-start rounded-bl-none'}`}>
+                    <div key={msg._id} className={`message-bubble ${msg.isFromAdmin ? 'message-admin' : 'message-user'}`}>
                       {msg.content}
-                      <span className="text-[0.65rem] opacity-70 block mt-1 text-right">
+                      <span className="message-meta">
                         {new Date(msg.createdAt).toLocaleString()}
                       </span>
                     </div>
                   ))}
                 </div>
-                <form className="p-4 border-t border-border flex gap-2 bg-black/20" onSubmit={sendSupportReply}>
+                <form className="support-reply-form" onSubmit={sendSupportReply}>
                   <input 
                     type="text" 
-                    className="form-input flex-1" 
+                    className="form-input flex-1 text-sm" 
                     placeholder="Type your reply to the user..." 
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
@@ -345,11 +349,11 @@ export default function AdminDashboard() {
           </div>
         </div>
       ) : (
-        <div className="plans-manage-grid grid grid-3 gap-6">
+        <div className="plans-manage-grid grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
           {plans.map(plan => (
-            <div key={plan._id} className="glass-card p-6 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg" style={{ color: plan.color }}>{plan.name}</h3>
+            <div key={plan._id} className="glass-card p-6 plan-card">
+              <div className="plan-header">
+                <h3 className="plan-name" style={{ color: plan.color }}>{plan.name}</h3>
                 <span className="badge" style={{ background: `${plan.color}20`, color: plan.color }}>{plan.planId}</span>
               </div>
               

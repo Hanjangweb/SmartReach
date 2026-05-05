@@ -1,8 +1,10 @@
 .analytics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr));
   gap: 1.5rem;
   margin-bottom: 3rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .analytics-grid .col-span-2 {
@@ -59,11 +61,13 @@
   gap: 0.5rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  min-width: 0;
 }
 
 .table-header {
   display: grid;
-  grid-template-columns: 1fr 80px 80px 80px 100px;
+  grid-template-columns: 1fr minmax(60px, auto) minmax(60px, auto) minmax(60px, auto) minmax(70px, auto);
   gap: 1rem;
   padding: 0.75rem;
   background: rgba(99, 102, 241, 0.05);
@@ -72,18 +76,24 @@
   font-weight: 600;
   text-transform: uppercase;
   color: var(--text-muted);
-  min-width: 480px;
+  min-width: 100%;
 }
 
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 80px 80px 80px 100px;
+  grid-template-columns: 1fr minmax(60px, auto) minmax(60px, auto) minmax(60px, auto) minmax(70px, auto);
   gap: 1rem;
   padding: 0.75rem;
   border-radius: 6px;
   align-items: center;
   transition: background 0.2s ease;
-  min-width: 480px;
+  min-width: 100%;
+}
+
+.col-source,
+.col-property {
+  min-width: 0;
+  word-break: break-word;
 }
 
 .table-row:hover {

@@ -406,12 +406,12 @@ export default function LeadDetail() {
 
               <div>
                 <label className="text-xs text-muted mb-2 block">Client Booking Link</label>
-                <div className="flex gap-2">
-                  <input className="form-input flex-1 text-xs bg-white/5 font-mono" readOnly value={bookingUrl} />
-                  <button className="btn btn-secondary btn-icon" onClick={() => copyToClipboard(bookingUrl)} title="Copy Booking Link">
+                <div className="flex gap-2" style={{ minWidth: 0 }}>
+                  <input className="form-input text-xs bg-white/5 font-mono" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }} readOnly value={bookingUrl} />
+                  <button className="btn btn-secondary btn-icon" style={{ flexShrink: 0 }} onClick={() => copyToClipboard(bookingUrl)} title="Copy Booking Link">
                     <Copy size={14} />
                   </button>
-                  <a href={`https://wa.me/${waPhone}?text=${encodeURIComponent(`Hi ${lead.name}, you can pick a time for your site visit using this link: ${bookingUrl}`)}`} target="_blank" rel="noreferrer" className="btn btn-success btn-icon" title="Send Link via WA">
+                  <a href={`https://wa.me/${waPhone}?text=${encodeURIComponent(`Hi ${lead.name}, you can pick a time for your site visit using this link: ${bookingUrl}`)}`} target="_blank" rel="noreferrer" className="btn btn-success btn-icon" style={{ flexShrink: 0 }} title="Send Link via WA">
                     <Send size={14} />
                   </a>
                 </div>
@@ -425,25 +425,25 @@ export default function LeadDetail() {
         <motion.div className="glass-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <div className="detail-tabs">
             <button className={`detail-tab ${tab === 'notes' ? 'active' : ''}`} onClick={() => setTab('notes')} id="tab-notes">
-              <MessageSquare size={16} /> Notes ({notes.length})
+              <MessageSquare size={16} /> <span className="tab-label">Notes ({notes.length})</span>
             </button>
             <button className={`detail-tab ${tab === 'ai' ? 'active' : ''}`} onClick={() => setTab('ai')} id="tab-ai">
-              <Bot size={16} /> AI Reply
+              <Bot size={16} /> <span className="tab-label">AI Reply</span>
             </button>
             <button className={`detail-tab ${tab === 'insight' ? 'active' : ''}`} onClick={() => setTab('insight')} id="tab-insight">
-              <Zap size={16} /> Insight
+              <Zap size={16} /> <span className="tab-label">Insight</span>
             </button>
             <button className={`detail-tab ${tab === 'properties' ? 'active' : ''}`} onClick={() => setTab('properties')} id="tab-properties">
-              <Home size={16} /> Catalog
+              <Home size={16} /> <span className="tab-label">Catalog</span>
             </button>
             <button className={`detail-tab ${tab === 'ai-matches' ? 'active' : ''}`} onClick={() => setTab('ai-matches')} id="tab-ai-matches">
-              <Search size={16} /> AI Matcher
+              <Search size={16} /> <span className="tab-label">AI Match</span>
             </button>
             <button className={`detail-tab ${tab === 'reminder' ? 'active' : ''}`} onClick={() => setTab('reminder')} id="tab-reminder">
-              <Bell size={16} /> Reminder
+              <Bell size={16} /> <span className="tab-label">Remind</span>
             </button>
             <button className={`detail-tab ${tab === 'documents' ? 'active' : ''}`} onClick={() => setTab('documents')} id="tab-documents">
-              <Cloud size={16} /> Documents
+              <Cloud size={16} /> <span className="tab-label">Docs</span>
             </button>
           </div>
 

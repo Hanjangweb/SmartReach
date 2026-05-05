@@ -157,10 +157,10 @@
     display: none;
   }
   .header {
-    padding: 0 10px;
-    gap: 6px;
+    padding: 0 16px;
+    justify-content: space-between;
   }
   .header-right {
-    gap: 5px;
+    gap: 12px;
   }
 }
