@@ -16,3 +16,9 @@
 }
 
 .mt-4 { margin-top: 16px; }
+
+@media (max-width: 768px) {
+  .add-lead-form { max-width: 100%; }
+  .form-section { margin-bottom: 20px; }
+  .form-section-title { font-size: 0.9rem; margin-bottom: 12px; padding-bottom: 8px; }
+}

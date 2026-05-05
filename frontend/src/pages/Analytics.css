@@ -52,13 +52,13 @@
   transform: scaleX(1.05);
 }
 
-/* Source ROI Table */
 .source-table,
 .property-table {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-header {
@@ -72,7 +72,7 @@
   font-weight: 600;
   text-transform: uppercase;
   color: var(--text-muted);
-  min-width: 500px;
+  min-width: 480px;
 }
 
 .table-row {
@@ -83,7 +83,7 @@
   border-radius: 6px;
   align-items: center;
   transition: background 0.2s ease;
-  min-width: 500px;
+  min-width: 480px;
 }
 
 .table-row:hover {
