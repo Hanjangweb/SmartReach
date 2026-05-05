@@ -43,6 +43,10 @@ export default function LeadDetail() {
   // Documents state
   const [uploadingDoc, setUploadingDoc] = useState(false);
 
+  // Templates state
+  const [templates, setTemplates] = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+
   useEffect(() => {
     fetchLead(id);
     api.get(`/leads/${id}/notes`).then((r) => setNotes(r.data.notes || [])).catch(() => {});
@@ -51,13 +55,16 @@ export default function LeadDetail() {
     }
   }, [id, user]);
 
-  useEffect(() => {
     if (tab === 'properties' && properties.length === 0) {
       setLoadingProps(true);
       api.get('/properties').then(r => setProperties(r.data.properties || [])).finally(() => setLoadingProps(false));
     }
     if (tab === 'ai-matches' && matches.length === 0) {
       fetchMatches();
+    }
+    if (tab === 'templates' && templates.length === 0) {
+      setLoadingTemplates(true);
+      api.get('/templates').then(r => setTemplates(r.data.templates || [])).finally(() => setLoadingTemplates(false));
     }
   }, [tab]);
 
@@ -442,6 +449,9 @@ export default function LeadDetail() {
             <button className={`detail-tab ${tab === 'reminder' ? 'active' : ''}`} onClick={() => setTab('reminder')} id="tab-reminder">
               <Bell size={16} /> <span className="tab-label">Remind</span>
             </button>
+            <button className={`detail-tab ${tab === 'templates' ? 'active' : ''}`} onClick={() => setTab('templates')} id="tab-templates">
+              <FileText size={16} /> <span className="tab-label">Templates</span>
+            </button>
             <button className={`detail-tab ${tab === 'documents' ? 'active' : ''}`} onClick={() => setTab('documents')} id="tab-documents">
               <Cloud size={16} /> <span className="tab-label">Docs</span>
             </button>
@@ -647,6 +657,59 @@ export default function LeadDetail() {
                 <button className="btn btn-primary" onClick={saveReminder} disabled={savingReminder} id="save-reminder-btn">
                   {savingReminder ? <span className="spinner" /> : <><Bell size={16} /> Set Reminder</>}
                 </button>
+              </div>
+            )}
+
+            {/* Templates Tab */}
+            {tab === 'templates' && (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-primary font-semibold flex items-center gap-2"><FileText size={16}/> Message Templates</h4>
+                </div>
+                {loadingTemplates ? (
+                  <div className="p-4 text-center text-muted">Loading templates...</div>
+                ) : templates.length === 0 ? (
+                  <div className="empty-state p-4">
+                    <span className="empty-state-icon">📝</span>
+                    <p>No templates found. Create some in the Templates menu!</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {templates.map(template => {
+                      let previewText = template.content
+                        .replace(/{{name}}/g, lead.name || 'Client')
+                        .replace(/{{location}}/g, lead.location || 'your area')
+                        .replace(/{{property}}/g, lead.propertyType || 'property')
+                        .replace(/{{budget}}/g, lead.budget ? `₹${lead.budget}L` : 'your budget')
+                        .replace(/{{phone}}/g, lead.phone || '');
+                        
+                      return (
+                        <div key={template._id} className="glass-card p-4 flex flex-col gap-2 border border-white/5" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                          <div className="flex justify-between items-center mb-1">
+                            <div className="font-semibold text-sm text-primary">{template.name}</div>
+                            <span className="badge badge-new">{template.category}</span>
+                          </div>
+                          <div className="text-sm text-muted whitespace-pre-wrap p-3 bg-black/20 rounded border border-white/5">
+                            {previewText}
+                          </div>
+                          <div className="flex justify-end gap-2 mt-2">
+                            <button className="btn btn-secondary btn-sm" onClick={() => copyToClipboard(previewText)}>
+                              <Copy size={14} /> Copy
+                            </button>
+                            <a 
+                              href={`https://wa.me/91${lead.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(previewText)}`} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="btn btn-success btn-sm"
+                            >
+                              <Send size={14} /> Send via WA
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
