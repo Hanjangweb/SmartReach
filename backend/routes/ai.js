@@ -9,7 +9,14 @@ const router = express.Router();
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
 const handleAIError = (err, res, next) => {
-  if (err.code === 'ECONNREFUSED' || err.code === 'ECONNABORTED' || err.code === 'ECONNRESET' || (err.response && err.response.status >= 500)) {
+  if (err.response && err.response.status === 500) {
+    return res.status(500).json({
+      success: false,
+      message: err.response.data?.detail || 'AI Service Internal Error'
+    });
+  }
+  
+  if (err.code === 'ECONNREFUSED' || err.code === 'ECONNABORTED' || err.code === 'ECONNRESET' || (err.response && [502, 503, 504].includes(err.response.status))) {
     return res.status(503).json({ 
       success: false, 
       message: 'AI Service is warming up (Free Tier). Please wait 45-60 seconds and try again!' 
