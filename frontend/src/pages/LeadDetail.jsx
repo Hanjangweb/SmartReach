@@ -55,6 +55,7 @@ export default function LeadDetail() {
     }
   }, [id, user]);
 
+  useEffect(() => {
     if (tab === 'properties' && properties.length === 0) {
       setLoadingProps(true);
       api.get('/properties').then(r => setProperties(r.data.properties || [])).finally(() => setLoadingProps(false));
